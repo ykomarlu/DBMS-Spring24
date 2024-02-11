@@ -2,9 +2,13 @@ package uga.cs4370.mydbimpl;
 
 import uga.cs4370.mydb.RA;
 import uga.cs4370.mydb.Relation;
+import uga.cs4370.mydb.RelationBuilder;
+import uga.cs4370.mydb.Type;
 import uga.cs4370.mydb.Predicate;
+import uga.cs4370.mydb.Cell;
 
 import java.util.List;
+import java.util.ArrayList;
 
 public class RAImpl implements RA {
     
@@ -28,7 +32,43 @@ public class RAImpl implements RA {
      * present in rel.
      */
     public Relation project(Relation rel, List<String> attrs) {
-        
+        List<Type> types = rel.getTypes();
+        List<String> attrList = rel.getAttrs();
+        List<Type> relTypes = new ArrayList<>();
+        List<Integer> indexes = new ArrayList<>();
+        List<String> newAttrList = new ArrayList<>();
+
+        for (int i = 0; i < attrs.size(); i++) {
+            try {
+                int index = rel.getAttrIndex(attrs.get(i));
+                newAttrList.add(attrList.get(index));
+                relTypes.add(types.get(index));
+                indexes.add(index);
+            } catch (IllegalArgumentException iae) {
+                throw new IllegalArgumentException("Attribute \"" + attrs.get(i) + "\" not found in relation!");
+            }
+        }
+
+        Relation joinedRelation = new RelationBuilder()
+            .attributeNames(newAttrList)
+            .attributeTypes(relTypes)
+            .build();
+    
+        List<List<Cell>> newRows = new ArrayList<>(new ArrayList<>()); 
+
+        for (int i = 0; i < rel.getSize(); i++) { 
+            List<Cell> row = new ArrayList<>();
+            for (int j = 0; j < indexes.size(); j++) {
+                row.add(rel.getRow(i).get(indexes.get(j)));
+            }
+            newRows.add(row);
+        }
+
+        for (int i = 0; i < newRows.size(); i++) {
+            joinedRelation.insert(newRows.get(i));
+        }
+
+        return joinedRelation;
     }
 
     /**
@@ -67,14 +107,14 @@ public class RAImpl implements RA {
     }
 
     /**
-     * Performs cartisian product on relations rel1 and rel2.
+     * Performs cartesian product on relations rel1 and rel2.
      * 
      * @return The resulting relation after applying cartisian product.
      * 
      * @throws IllegalArgumentException if rel1 and rel2 have common attibutes.
      */
     public Relation cartesianProduct(Relation rel1, Relation rel2) {
-        
+
     }
 
     /**
@@ -85,6 +125,8 @@ public class RAImpl implements RA {
     public Relation join(Relation rel1, Relation rel2) {
         
     }
+
+    
 
     /**
      * Performs theta join on relations rel1 and rel2 with predicate p.
