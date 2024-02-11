@@ -34,6 +34,7 @@ public class RAImpl implements RA {
     public Relation project(Relation rel, List<String> attrs) {
         List<Type> types = rel.getTypes();
         List<String> attrList = rel.getAttrs();
+        
         List<Type> relTypes = new ArrayList<>();
         List<Integer> indexes = new ArrayList<>();
         List<String> newAttrList = new ArrayList<>();
@@ -53,19 +54,13 @@ public class RAImpl implements RA {
             .attributeNames(newAttrList)
             .attributeTypes(relTypes)
             .build();
-    
-        List<List<Cell>> newRows = new ArrayList<>(new ArrayList<>()); 
 
         for (int i = 0; i < rel.getSize(); i++) { 
             List<Cell> row = new ArrayList<>();
             for (int j = 0; j < indexes.size(); j++) {
                 row.add(rel.getRow(i).get(indexes.get(j)));
             }
-            newRows.add(row);
-        }
-
-        for (int i = 0; i < newRows.size(); i++) {
-            joinedRelation.insert(newRows.get(i));
+            joinedRelation.insert(row);
         }
 
         return joinedRelation;
@@ -125,8 +120,6 @@ public class RAImpl implements RA {
     public Relation join(Relation rel1, Relation rel2) {
         
     }
-
-    
 
     /**
      * Performs theta join on relations rel1 and rel2 with predicate p.
