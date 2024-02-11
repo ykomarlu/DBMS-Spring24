@@ -15,12 +15,24 @@ public class Driver {
         // After creating the table, data is loaded from a CSV file.
         // Path should be replaced with a correct file path for a compatible
         // CSV file.
-        Relation rel1 = new RelationBuilder()
-                .attributeNames(List.of("Col01_Name", "Col02_Name", "Col03_Name"))
-                .attributeTypes(List.of(Type.INTEGER, Type.STRING, Type.DOUBLE))
-                .build();
-        rel1.loadData("/path/to/exported/csv_file");
-        rel1.print();
+        Relation instructorRel = new RelationBuilder()
+        .attributeNames(List.of("ID", "name", "dept_name", "salary"))
+        .attributeTypes(List.of(Type.INTEGER, Type.STRING, Type.STRING, Type.DOUBLE))
+        .build();
+
+        instructorRel.loadData("./resources/instructor_export.csv");
+
+        Relation studentsRel = new RelationBuilder()
+        .attributeNames(List.of("ID", "name", "dept_name", "tot_cred"))
+        .attributeTypes(List.of(Type.INTEGER, Type.STRING, Type.STRING, Type.INTEGER))
+        .build();
+
+        studentsRel.loadData("./resources/student_export.csv");
+
+        RAImpl ra = new RAImpl();
+
+        Relation newProjection = ra.project(studentsRel, List.of("dept_name", "name"));
+        newProjection.print();
     }
 
 }
