@@ -34,15 +34,15 @@ public class RAImpl implements RA {
     public Relation project(Relation rel, List<String> attrs) {
         List<Type> types = rel.getTypes();
         List<String> attrList = rel.getAttrs();
-        
+
         List<Type> relTypes = new ArrayList<>();
+        List<String> relAttrs = new ArrayList<>();
         List<Integer> indexes = new ArrayList<>();
-        List<String> newAttrList = new ArrayList<>();
 
         for (int i = 0; i < attrs.size(); i++) {
             try {
                 int index = rel.getAttrIndex(attrs.get(i));
-                newAttrList.add(attrList.get(index));
+                relAttrs.add(attrList.get(index));
                 relTypes.add(types.get(index));
                 indexes.add(index);
             } catch (IllegalArgumentException iae) {
@@ -50,20 +50,22 @@ public class RAImpl implements RA {
             }
         }
 
-        Relation joinedRelation = new RelationBuilder()
-            .attributeNames(newAttrList)
+        Relation projectedRelation = new RelationBuilder()
+            .attributeNames(relAttrs)
             .attributeTypes(relTypes)
             .build();
 
         for (int i = 0; i < rel.getSize(); i++) { 
             List<Cell> row = new ArrayList<>();
+
             for (int j = 0; j < indexes.size(); j++) {
                 row.add(rel.getRow(i).get(indexes.get(j)));
             }
-            joinedRelation.insert(row);
+
+            projectedRelation.insert(row);
         }
 
-        return joinedRelation;
+        return projectedRelation;
     }
 
     /**
