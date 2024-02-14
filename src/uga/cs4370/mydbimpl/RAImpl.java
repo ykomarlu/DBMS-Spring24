@@ -76,7 +76,7 @@ public class RAImpl implements RA {
      * @throws IllegalArgumentException If rel1 and rel2 are not compatible.
      */
     public Relation union(Relation rel1, Relation rel2) {
-        
+        if (rel1.getAttrs().size() == rel2.getAttrs().size() && rel1.getTypes.hashCode() == rel2.getTypes())
     }
 
     /**
