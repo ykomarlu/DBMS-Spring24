@@ -31,8 +31,14 @@ public class Driver {
 
         RAImpl ra = new RAImpl();
 
-        Relation newProjection = ra.project(studentsRel, List.of("dept_name", "name"));
-        newProjection.print();
+        Relation projectedRelationInstructor = ra.project(instructorRel, List.of("dept_name", "salary"));
+        Relation projectedRelationStudent = ra.project(studentsRel, List.of("dept_name", "tot_cred"));
+
+        projectedRelationStudent.print();
+
+        Relation naturalJoinRelation = ra.join(projectedRelationInstructor, projectedRelationStudent);
+
+        naturalJoinRelation.print();
     }
 
 }
