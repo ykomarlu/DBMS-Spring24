@@ -87,7 +87,25 @@ public class RAImpl implements RA {
      * @throws IllegalArgumentException If rel1 and rel2 are not compatible.
      */
     public Relation diff(Relation rel1, Relation rel2) {
-        
+         if (!rel1.getAttrs().equals(rel2.getAttrs()) || !rel1.getTypes().equals(rel2.getTypes())) {
+            throw new IllegalArgumentException("Relations are not compatible for difference operation.");
+        }
+    
+        // Create a new relation with the same schema as the input relations
+        RelationBuilder builder = new RelationBuilder()
+                .attributeNames(rel1.getAttrs())
+                .attributeTypes(rel1.getTypes());
+        Relation resultRelation = builder.build();
+    
+        // Add rows from rel1 to the result relation only if they are not present in rel2
+        for (int i = 0; i < rel1.getSize(); i++) {
+            List<Cell> row = rel1.getRow(i);
+            if (!containsRow(rel2, row)) {
+                resultRelation.insert(new ArrayList<>(row));
+            }
+        }
+    
+        return resultRelation;
     }
 
     /**
