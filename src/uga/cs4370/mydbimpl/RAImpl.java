@@ -457,6 +457,32 @@ public class RAImpl implements RA {
         return joinedRelation;
     }
 
+
+    public Relation cartJoin(Relation rel1, Relation rel2, Predicate p){
+        List<String> attrList = rel1.getAttrs();
+        attrList.addAll(rel2.getAttrs());
+        List<Type> types = rel1.getTypes();
+        types.addAll(rel2.getTypes());
+
+        Relation joinedRelation = new RelationBuilder()
+                .attributeNames(attrList)
+                .attributeTypes(types)
+                .build();
+
+        Relation cartRel = cartesianProduct(rel1, rel2);
+
+        for(int i = 0; i < cartRel.getSize(); i++) {
+            List<Cell> row = new ArrayList<>();
+            if (p.check(cartRel.getRow(i))){
+                for (int j = 0; j < cartRel.getRow(i).size(); j++)
+                {
+                    row.add(cartRel.getRow(i).get(j));
+                }
+                joinedRelation.insert(row);
+            }
+        }
+        return joinedRelation;
+    }
     /**
      * Prints 50 rows of a relation
      * 
