@@ -117,44 +117,15 @@ public class Driver {
 // test the diff methods 
         RAImpl ra = new RAImpl();
 
-        // Create the first dummy relation (relationA) with some attributes and data
-        RelationBuilder builderA = new RelationBuilder()
-                .attributeNames(Arrays.asList("ID", "Name", "Dept", "Salary"))
-                .attributeTypes(Arrays.asList(Type.INTEGER, Type.STRING, Type.STRING, Type.DOUBLE));
-        Relation relationA = builderA.build();
 
-        // Insert data into relationA
-        relationA.insert(Arrays.asList(Cell.val(1), Cell.val("Asen"), Cell.val("CS"), Cell.val(1820000.0)));
-        relationA.insert(Arrays.asList(Cell.val(2), Cell.val("Bsen"), Cell.val("Math"), Cell.val(525000.0)));
-        relationA.insert(Arrays.asList(Cell.val(3), Cell.val("Csen"), Cell.val("Bio"), Cell.val(1230000.0)));
+        Relation projectedRelationInstructor = ra.project(instructorRel, List.of("dept_name", "salary"));
+        Relation projectedRelationStudent = ra.project(studentsRel, List.of("dept_name", "tot_cred"));
 
-        // Create the second dummy relation (relationB) with the same schema but different data
-        RelationBuilder builderB = new RelationBuilder()
-                .attributeNames(Arrays.asList("ID1", "Name1", "Salary1"))
-//                .attributeNames(Arrays.asList("ID1", "Name1", "Dept1", "Salary1"))
-                .attributeTypes(Arrays.asList(Type.INTEGER, Type.STRING, Type.DOUBLE));
-        Relation relationB = builderB.build();
+        projectedRelationStudent.print();
 
-        // Insert data into relationB
-//        relationB.insert(Arrays.asList(Cell.val(1), Cell.val("Asen"), Cell.val("CS"), Cell.val(1820000.0)));
-//        relationB.insert(Arrays.asList(Cell.val(2), Cell.val("Bsen"), Cell.val("Math"), Cell.val(525000.0)));
-//        relationB.insert(Arrays.asList(Cell.val(3), Cell.val("Dsen"), Cell.val("CS"), Cell.val(622000.0)));
-        relationB.insert(Arrays.asList(Cell.val(1), Cell.val("Asen"), Cell.val(1820000.0)));
-        relationB.insert(Arrays.asList(Cell.val(2), Cell.val("Bsen"), Cell.val(525000.0)));
-        relationB.insert(Arrays.asList(Cell.val(3), Cell.val("Dsen"), Cell.val(622000.0)));
+        Relation naturalJoinRelation = ra.join(projectedRelationInstructor, projectedRelationStudent);
 
-        // Print the original relations for comparison
-        System.out.println("Relation A:");
-        relationA.print();
-        System.out.println("Relation B:");
-        relationB.print();
-
-        // Perform the diff operation to get rows in A that are not in B
-        Relation diffRelation = ra.union(relationA, relationB);
-
-        // Print the result of the diff operation
-        System.out.println("Result of A X B:");
-        diffRelation.print();
+        naturalJoinRelation.print();
     }
 
 }

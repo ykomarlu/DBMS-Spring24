@@ -32,6 +32,7 @@ public class RAImpl implements RA {
      * present in rel.
      */
     public Relation project(Relation rel, List<String> attrs) {
+
         List<Type> types = rel.getTypes(); //int, String
         List<String> attrList = rel.getAttrs(); // prof_id, name
 
@@ -61,7 +62,7 @@ public class RAImpl implements RA {
 
         for (int i = 0; i < rel.getSize(); i++) { 
             List<Cell> row = new ArrayList<>();
-
+            
             for (int j = 0; j < indexes.size(); j++) {
                 row.add(rel.getRow(i).get(indexes.get(j)));
             }
@@ -114,7 +115,26 @@ public class RAImpl implements RA {
      * @throws IllegalArgumentException If rel1 and rel2 are not compatible.
      */
     public Relation diff(Relation rel1, Relation rel2) {
-        return null;
+
+         if (!rel1.getAttrs().equals(rel2.getAttrs()) || !rel1.getTypes().equals(rel2.getTypes())) {
+            throw new IllegalArgumentException("Relations are not compatible for difference operation.");
+        }
+    
+        // Create a new relation with the same schema as the input relations
+        RelationBuilder builder = new RelationBuilder()
+                .attributeNames(rel1.getAttrs())
+                .attributeTypes(rel1.getTypes());
+        Relation resultRelation = builder.build();
+    
+        // Add rows from rel1 to the result relation only if they are not present in rel2
+        for (int i = 0; i < rel1.getSize(); i++) {
+            List<Cell> row = rel1.getRow(i);
+            if (!containsRow(rel2, row)) {
+                resultRelation.insert(new ArrayList<>(row));
+            }
+        }
+    
+        return resultRelation;
     }
 
     /**
@@ -127,7 +147,35 @@ public class RAImpl implements RA {
      * rel or origAttr and renamedAttr do not have matching argument counts.
      */
     public Relation rename(Relation rel, List<String> origAttr, List<String> renamedAttr) {
-        return null;
+         if (origAttr.size() != renamedAttr.size()) {
+            throw new IllegalArgumentException("Original and new attribute lists must have the same length.");
+        }
+
+        List<Type> types = rel.getTypes();
+        List<String> attrList = new ArrayList<>(rel.getAttrs()); 
+
+        
+        for (int i = 0; i < origAttr.size(); i++) {
+            String originalName = origAttr.get(i);
+            String newName = renamedAttr.get(i);
+
+            int index = rel.getAttrIndex(originalName); 
+            attrList.set(index, newName); 
+        }
+
+        
+        Relation renamedRelation = new RelationBuilder()
+                .attributeNames(attrList)
+                .attributeTypes(types)
+                .build();
+
+       
+        for (int i = 0; i < rel.getSize(); i++) {
+            List<Cell> row = rel.getRow(i); 
+            renamedRelation.insert(new ArrayList<>(row)); 
+        }
+
+        return renamedRelation;
     }
 
     /**
@@ -137,10 +185,11 @@ public class RAImpl implements RA {
      * 
      * @throws IllegalArgumentException if rel1 and rel2 have common attibutes.
      */
+
     public Relation cartesianProduct(Relation rel1, Relation rel2) throws IllegalArgumentException {
 
-        for (String str: rel1.getAttrs()) {
-            if(rel2.hasAttr(str)) throw new IllegalArgumentException("Duplicate Attribute");
+        for (String str : rel1.getAttrs()) {
+            if (rel2.hasAttr(str)) throw new IllegalArgumentException("Duplicate Attribute");
         }
 //do a double for loop using hasAttr to check to see if there are any common attributes
 
@@ -189,7 +238,7 @@ public class RAImpl implements RA {
 
                 List<Cell> row2 = new ArrayList<>();
 
-                for (Cell cell: row) {
+                for (Cell cell : row) {
                     row2.add(cell);
                 }
 
@@ -209,12 +258,132 @@ public class RAImpl implements RA {
     }
 
     /**
+     * Class to hold attrs and types in a list
+     * 
+     */
+    public class Pair {
+        public String attr;
+        public Type type;
+        public int[] indexes = new int[2];
+        public boolean isCommon = false;
+
+        Pair(String attr, Type type) {
+            this.attr = attr;
+            this.type = type;
+        }
+
+        Pair(String attr, Type type, int r1Index, int r2Index, boolean isCommon) {
+            this.attr = attr;
+            this.type = type;
+            this.indexes[0] = r1Index;
+            this.indexes[1] = r2Index;
+            this.isCommon = true;
+        }
+     }
+
+    /**
+     * Function that returns the common attributes between the two lists.
+     * 
+     * @return A list of the common attributes.
+     */
+    public List<Pair> mergeRels(Relation rel1, Relation rel2) {
+
+        List<String> rel1Attrs = rel1.getAttrs();
+        List<Type> rel1Types = rel1.getTypes();
+        List<String> rel2Attrs = rel2.getAttrs();
+        List<Type> rel2Types = rel2.getTypes();
+
+        List<Pair> pairs = new ArrayList<>();
+        List<Pair> otherPairs = new ArrayList<>();
+
+        for (int i = 0; i < rel1Attrs.size(); i++) {
+            String attr = rel1Attrs.get(i);
+            if (rel2Attrs.contains(attr)) {
+                pairs.add(new Pair(attr, rel1Types.get(i), i, rel2.getAttrIndex(attr), true));
+            } else {
+                otherPairs.add(new Pair(attr, rel1Types.get(i)));
+            }
+        }
+
+        for (int i = 0; i < rel2Attrs.size(); i++) {
+            String attr = rel2Attrs.get(i);
+            if (!rel1Attrs.contains(attr)) {
+                otherPairs.add(new Pair(attr, rel2Types.get(i)));
+            }
+        }
+
+        pairs.addAll(otherPairs);
+
+        return pairs;
+    }
+
+    /**
      * Peforms natural join on relations rel1 and rel2.
      * 
      * @return The resulting relation after applying natural join.
      */
     public Relation join(Relation rel1, Relation rel2) {
-        return null;
+
+        List<Pair> relationPairs = mergeRels(rel1, rel2);
+
+        List<String> finalRelAttrs = new ArrayList<>();
+        List<Type> finalRelTypes = new ArrayList<>();
+        List<Integer> r1CommonIndexes = new ArrayList<>();
+        List<Integer> r2CommonIndexes = new ArrayList<>();
+
+        for (int i = 0; i < relationPairs.size(); i++) {
+            finalRelAttrs.add(relationPairs.get(i).attr);
+            finalRelTypes.add(relationPairs.get(i).type);
+        }
+
+        for (int i = 0; i < relationPairs.size(); i++) {
+            if (relationPairs.get(i).isCommon) {
+                r1CommonIndexes.add(relationPairs.get(i).indexes[0]);
+                r2CommonIndexes.add(relationPairs.get(i).indexes[1]);
+            } else {
+                break;
+            }
+        }
+
+        int rel1RowSize = rel1.getRow(0).size();
+        int rel2RowSize = rel2.getRow(0).size();
+
+        Relation joinedRelation = new RelationBuilder()
+            .attributeNames(finalRelAttrs)
+            .attributeTypes(finalRelTypes)
+            .build();
+
+        for (int i = 0; i < rel1.getSize(); i++) {
+            for (int j = 0; j < rel2.getSize(); j++) {
+                boolean skip = false;
+                List<Cell> row = new ArrayList<>();
+
+                for (int k = 0; k < r1CommonIndexes.size(); k++) {
+                    if (rel1.getRow(i).get(r1CommonIndexes.get(k)).equals(rel2.getRow(j).get(r2CommonIndexes.get(k)))) {
+                        row.add(rel1.getRow(i).get(r1CommonIndexes.get(k)));
+                    } else {
+                        skip = true;
+                        break;
+                    }
+                }
+
+                if (!skip) {
+                    for (int k = 0; k < rel1RowSize; k++) {
+                        if (!r1CommonIndexes.contains(k)) {
+                            row.add(rel1.getRow(i).get(k));
+                        }
+                    }
+                    for (int k = 0; k < rel2RowSize; k++) {
+                        if (!r2CommonIndexes.contains(k)) {
+                            row.add(rel2.getRow(j).get(k));
+                        }
+                    }
+                    joinedRelation.insert(row);
+                }
+            }
+        }
+
+        return joinedRelation;
     }
 
     /**
