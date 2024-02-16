@@ -123,27 +123,27 @@ public class RAImpl implements RA {
         }
 
         List<Type> types = rel.getTypes();
-        List<String> attrList = new ArrayList<>(rel.getAttrs()); // Create a modifiable copy of the attribute names
+        List<String> attrList = new ArrayList<>(rel.getAttrs()); 
 
-        // Replace original attribute names with new names
+        
         for (int i = 0; i < origAttr.size(); i++) {
             String originalName = origAttr.get(i);
             String newName = renamedAttr.get(i);
 
-            int index = rel.getAttrIndex(originalName); // May throw IllegalArgumentException if attribute doesn't exist
-            attrList.set(index, newName); // Update the name in the copied list
+            int index = rel.getAttrIndex(originalName); 
+            attrList.set(index, newName); 
         }
 
-        // Use RelationBuilder to create a new relation with the updated attribute names
+        
         Relation renamedRelation = new RelationBuilder()
                 .attributeNames(attrList)
                 .attributeTypes(types)
                 .build();
 
-        // Copy all rows from the ogit initriginal relation to the new one
+       
         for (int i = 0; i < rel.getSize(); i++) {
-            List<Cell> row = rel.getRow(i); // Assuming getRow(i) returns a deep copy or immutable list
-            renamedRelation.insert(new ArrayList<>(row)); // Ensure a new list is created if necessary
+            List<Cell> row = rel.getRow(i); 
+            renamedRelation.insert(new ArrayList<>(row)); 
         }
 
         return renamedRelation;
