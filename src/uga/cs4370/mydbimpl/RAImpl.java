@@ -412,53 +412,14 @@ public class RAImpl implements RA {
      * @throws IllegalArgumentException if rel1 and rel2 have common attibutes.
      */
     public Relation join(Relation rel1, Relation rel2, Predicate p) {
-        
-            for(int i = 0; i < rel1.getAttrs().size(); i++)
-            {
-                for (int k = 0; k < rel2.getAttrs().size();k++)
-                {
-                    if ((rel1.getAttrs().get(i)).equals(rel2.getAttrs().get(k)))
-                    {
-                        throw new IllegalArgumentException();
-                    }//if
-                }//for
-            }//for
-
-
-        List<String> attrList = rel1.getAttrs();
-        attrList.addAll(rel2.getAttrs());
-        List<Type> types = rel1.getTypes();
-        types.addAll(rel2.getTypes());
-
-        Relation joinedRelation = new RelationBuilder()
-                .attributeNames(attrList)
-                .attributeTypes(types)
-                .build();
-
-        for(int i = 0; i < rel1.getSize(); i++)
-        {
-            for (int j = 0; j < rel2.getSize();j++)
-            {
-                List<Cell> row = new ArrayList<>();
-                if (p.check(rel1.getRow(i)) && p.check(rel2.getRow(j))){
-                    for (int k = 0; k < rel1.getAttrs().size(); k++)
-                    {
-                        row.add(rel1.getRow(i).get(k));
-                    }
-                    for (int k = 0; k < rel2.getAttrs().size(); k++)
-                    {
-                        row.add(rel2.getRow(j).get(k));
-                    }
-                    joinedRelation.insert(row);
-                }
+        for (int i = 0; i < rel1.getAttrs().size(); i++) {
+            for (int k = 0; k < rel2.getAttrs().size(); k++) {
+                if ((rel1.getAttrs().get(i)).equals(rel2.getAttrs().get(k))) {
+                    throw new IllegalArgumentException();
+                }//if
             }//for
         }//for
 
-        return joinedRelation;
-    }
-
-
-    public Relation cartJoin(Relation rel1, Relation rel2, Predicate p){
         List<String> attrList = rel1.getAttrs();
         attrList.addAll(rel2.getAttrs());
         List<Type> types = rel1.getTypes();
@@ -483,25 +444,4 @@ public class RAImpl implements RA {
         }
         return joinedRelation;
     }
-    /**
-     * Prints 50 rows of a relation
-     * 
-     */
-    public void print50(Relation rel) {
-
-        Relation printRelation = new RelationBuilder()
-            .attributeNames(rel.getAttrs())
-            .attributeTypes(rel.getTypes())
-            .build();
-
-        int size = rel.getSize() < 50 ? rel.getSize() : 50;
-
-        for (int i = 0; i < size; i++) {
-            printRelation.insert(rel.getRow(i));
-        }
-
-        printRelation.print();
-        
-    }
-
 }
