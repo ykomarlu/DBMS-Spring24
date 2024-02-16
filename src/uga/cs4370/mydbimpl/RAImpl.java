@@ -124,6 +124,30 @@ public class RAImpl implements RA {
         return newRelation;
     }
 
+    private boolean containsRow(Relation relation, List<Cell> rowToCheck) {
+        for (int i = 0; i < relation.getSize(); i++) {
+            List<Cell> currentRow = relation.getRow(i);
+            if (rowsEqual(currentRow, rowToCheck)) {
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    private boolean rowsEqual(List<Cell> row1, List<Cell> row2) {
+        if (row1.size() != row2.size()) {
+            return false;
+        }
+        for (int i = 0; i < row1.size(); i++) {
+            Cell cell1 = row1.get(i);
+            Cell cell2 = row2.get(i);
+            if (!cell1.equals(cell2)) {
+                return false;
+            }
+        }
+        return true;
+    
+     }
     /**
      * Performs the set difference operaion on the relations rel1 and rel2.
      * 
