@@ -19,7 +19,24 @@ public class RAImpl implements RA {
      * @return The resulting relation after applying the select operation.
      */
     public Relation select(Relation rel, Predicate p) {
-        return null;
+        Relation selectedRelation = new RelationBuilder()
+                .attributeNames(rel.getAttrs())
+                .attributeTypes(rel.getTypes())
+                .build();
+
+            for (int i = 0; i < rel.getSize(); i++) {
+                List<Cell> row = new ArrayList<>();
+                if (p.check(rel.getRow(i))){ // if predicate is true, add the row to the relation
+                    for (int j = 0; j < rel.getAttrs().size(); j++) {
+                        row.add(rel.getRow(i).get(j));
+                    }//for
+                    selectedRelation.insert(row);
+                }//if
+            }//for
+
+
+
+        return selectedRelation;
     }
 
     /**
@@ -394,6 +411,48 @@ public class RAImpl implements RA {
      * @throws IllegalArgumentException if rel1 and rel2 have common attibutes.
      */
     public Relation join(Relation rel1, Relation rel2, Predicate p) {
-        return null;
+        
+            for(int i = 0; i < rel1.getAttrs().size(); i++)
+            {
+                for (int k = 0; k < rel2.getAttrs().size();k++)
+                {
+                    if ((rel1.getAttrs().get(i)).equals(rel2.getAttrs().get(k)))
+                    {
+                        throw new IllegalArgumentException();
+                    }//if
+                }//for
+            }//for
+
+
+        List<String> attrList = rel1.getAttrs();
+        attrList.addAll(rel2.getAttrs());
+        List<Type> types = rel1.getTypes();
+        types.addAll(rel2.getTypes());
+
+        Relation joinedRelation = new RelationBuilder()
+                .attributeNames(attrList)
+                .attributeTypes(types)
+                .build();
+
+        for(int i = 0; i < rel1.getSize(); i++)
+        {
+            for (int j = 0; j < rel2.getSize();j++)
+            {
+                List<Cell> row = new ArrayList<>();
+                if (p.check(rel1.getRow(i)) && p.check(rel2.getRow(j))){
+                    for (int k = 0; k < rel1.getAttrs().size(); k++)
+                    {
+                        row.add(rel1.getRow(i).get(k));
+                    }
+                    for (int k = 0; k < rel2.getAttrs().size(); k++)
+                    {
+                        row.add(rel2.getRow(j).get(k));
+                    }
+                    joinedRelation.insert(row);
+                }
+            }//for
+        }//for
+
+        return joinedRelation;
     }
 }
