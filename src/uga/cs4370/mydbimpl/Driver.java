@@ -1,12 +1,8 @@
 package uga.cs4370.mydbimpl;
 
 import java.util.Arrays;
-import uga.cs4370.mydb.Relation;
-import uga.cs4370.mydb.RelationBuilder;
-import uga.cs4370.mydbimpl.RAImpl;
+import java.util.List;
 
-
-import java.util.Arrays;
 import uga.cs4370.mydb.Relation;
 import uga.cs4370.mydb.RelationBuilder;
 import uga.cs4370.mydb.Type;
@@ -117,15 +113,29 @@ public class Driver {
 // test the diff methods 
         RAImpl ra = new RAImpl();
 
+        Relation instructorRel = new RelationBuilder()
+        .attributeNames(List.of("ID", "name", "dept_name", "salary"))
+        .attributeTypes(List.of(Type.INTEGER, Type.STRING, Type.STRING, Type.DOUBLE))
+        .build();
+
+        instructorRel.loadData("./resources/instructor_export.csv");
+
+        Relation studentsRel = new RelationBuilder()
+        .attributeNames(List.of("ID", "name", "dept_name", "tot_cred"))
+        .attributeTypes(List.of(Type.INTEGER, Type.STRING, Type.STRING, Type.INTEGER))
+        .build();
+
+        studentsRel.loadData("./resources/student_export.csv");
 
         Relation projectedRelationInstructor = ra.project(instructorRel, List.of("dept_name", "salary"));
-        Relation projectedRelationStudent = ra.project(studentsRel, List.of("dept_name", "tot_cred"));
+        Relation projectedRelationStudent = ra.project(studentsRel, List.of("name", "dept_name", "tot_cred"));
 
-        projectedRelationStudent.print();
+        // ra.print50(projectedRelationInstructor);
+        // ra.print50(projectedRelationStudent);
 
         Relation naturalJoinRelation = ra.join(projectedRelationInstructor, projectedRelationStudent);
 
-        naturalJoinRelation.print();
+        ra.print50(naturalJoinRelation);
     }
 
 }
