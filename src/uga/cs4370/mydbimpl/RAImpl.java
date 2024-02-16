@@ -444,4 +444,26 @@ public class RAImpl implements RA {
         }
         return joinedRelation;
     }
+
+    /**
+     * Prints 50 rows of a relation
+     * 
+     */
+    public void print50(Relation rel) {
+
+        Relation printRelation = new RelationBuilder()
+            .attributeNames(rel.getAttrs())
+            .attributeTypes(rel.getTypes())
+            .build();
+
+        int size = rel.getSize() < 50 ? rel.getSize() : 50;
+
+        for (int i = 0; i < size; i++) {
+            printRelation.insert(rel.getRow(i));
+        }
+
+        printRelation.print();
+        
+    }
+
 }
