@@ -468,7 +468,9 @@ public class RAImpl implements RA {
             .attributeTypes(rel.getTypes())
             .build();
 
-        for (int i = 0; i < 50; i++) {
+        int size = rel.getSize() < 50 ? rel.getSize() : 50;
+
+        for (int i = 0; i < size; i++) {
             printRelation.insert(rel.getRow(i));
         }
 
