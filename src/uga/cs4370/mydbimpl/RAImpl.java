@@ -364,6 +364,7 @@ public class RAImpl implements RA {
 
         int rel1RowSize = rel1.getRow(0).size();
         int rel2RowSize = rel2.getRow(0).size();
+        int rel2Size = rel2.getSize();
 
         Relation joinedRelation = new RelationBuilder()
             .attributeNames(finalRelAttrs)
@@ -371,7 +372,7 @@ public class RAImpl implements RA {
             .build();
 
         for (int i = 0; i < rel1.getSize(); i++) {
-            for (int j = 0; j < rel2.getSize(); j++) {
+            for (int j = 0; j < rel2Size; j++) {
                 boolean skip = false;
                 List<Cell> row = new ArrayList<>();
 
@@ -455,4 +456,24 @@ public class RAImpl implements RA {
 
         return joinedRelation;
     }
+
+    /**
+     * Prints 50 rows of a relation
+     * 
+     */
+    public void print50(Relation rel) {
+
+        Relation printRelation = new RelationBuilder()
+            .attributeNames(rel.getAttrs())
+            .attributeTypes(rel.getTypes())
+            .build();
+
+        for (int i = 0; i < 50; i++) {
+            printRelation.insert(rel.getRow(i));
+        }
+
+        printRelation.print();
+        
+    }
+
 }
