@@ -2,6 +2,9 @@ package uga.cs4370.mydbimpl;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
 
 import uga.cs4370.mydb.Relation;
 import uga.cs4370.mydb.RelationBuilder;
