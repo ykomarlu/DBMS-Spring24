@@ -88,21 +88,23 @@ public class Driver {
 
         Relation q4ProjectedStu = ra.project(studentsRel, List.of("stu_id", "tot_cred"));
         Relation q4ProjectedIns = ra.project(instructorRel, List.of("instr_id", "salary"));
-        Relation q4StuSel = ra.select(q4ProjectedStu, row -> row.get(studentRelation.getAttrIndex("stu_id")).equals(Cell.val(1000)));
-        Relation query4 = ra.cartesianProduct(q4ProjectedStu, q4ProjectedIns);
+        Relation q4StuSel = ra.select(q4ProjectedStu, row -> row.get(studentsRel.getAttrIndex("stu_id")).equals(Cell.val(1000)));
+        Relation query4 = ra.cartesianProduct(q4StuSel, q4ProjectedIns);
 
         System.out.println("\n\nCartesian Product of Instructors and Students with an id of 1000 when they're projected to not have Name and Dept_Name");
-        ra.print50(query4);
+        query4.print();
 
 
 
         Relation geoStudent = ra.select(studentsRel,((row)->row.get(studentsRel.getAttrIndex("dept_name")).equals(Cell.val("Geology"))));
         Relation geoInstructor = ra.select(instructorRel,((row)->row.get(instructorRel.getAttrIndex("dept_name")).equals(Cell.val("Geology"))));
-        Relation projectedStudent = ra.project(geoStudent, List.of("name"));
-        Relation projectedInstructor = ra.project(geoInstructor, List.of("name"));
+        Relation q5ProjectedStu = ra.project(geoStudent, List.of("name"));
+        Relation q5ProjectedIns = ra.project(geoInstructor, List.of("name"));
 
-        Relation geoRelation = (ra.union(projectedStudent, projectedInstructor));
-        geoRelation.print();
+        Relation query5 = (ra.union(q5ProjectedStu, q5ProjectedIns));
+
+        System.out.println("\n\nUnion of the names of Students and Instructors in the Geology Department.");
+        query5.print();
 
 
     }
