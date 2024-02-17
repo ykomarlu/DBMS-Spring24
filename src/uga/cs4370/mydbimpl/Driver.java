@@ -1,6 +1,9 @@
 package uga.cs4370.mydbimpl;
 
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import uga.cs4370.mydb.Cell;
 import uga.cs4370.mydb.Relation;
@@ -43,6 +46,32 @@ public class Driver {
         .build();
 
         takesRel.loadData("./resources/takes_export.csv");
+
+
+
+        Set<Integer> instructorIDs = new HashSet<>();
+
+        for (int i = 0; i < instructorRel.getSize(); i++) {
+            List<Cell> row = instructorRel.getRow(i);
+            int id = row.get(0).getAsInt(); 
+            instructorIDs.add(id);
+        }
+
+        Relation advisorsNotInstructors = new RelationBuilder()
+            .attributeNames(advisorRel.getAttrs())
+            .attributeTypes(advisorRel.getTypes())
+            .build();
+
+        for (int i = 0; i < advisorRel.getSize(); i++) {
+            List<Cell> row = advisorRel.getRow(i);
+            int advisorID = row.get(1).getAsInt();
+            if (!instructorIDs.contains(advisorID)) {
+                advisorsNotInstructors.insert(new ArrayList<>(row));
+            }
+        }
+
+        System.out.println("Prints all Advisors who are not instructors (should be empty)");
+        ra.print50(advisorsNotInstructors);
 
 
 
