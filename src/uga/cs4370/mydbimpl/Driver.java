@@ -48,47 +48,34 @@ public class Driver {
         takesRel.loadData("./resources/takes_export.csv");
 
 
+        
+        Relation q1GreaterThan50k = ra.select(instructorRel, row -> row.get(instructorRel.getAttrIndex("salary")).getAsDouble() > 50000);
+        Relation q1InCSDept = ra.select(instructorRel, row -> row.get(instructorRel.getAttrIndex("dept_name")).getAsString() == "Comp. Sci.");
+        Relation q1Diff50kCS = ra.diff(q1GreaterThan50k, q1InCSDept);
+        Relation query1 = ra.join(q1Diff50kCS, advisorRel);
 
-        Set<Integer> instructorIDs = new HashSet<>();
-
-        for (int i = 0; i < instructorRel.getSize(); i++) {
-            List<Cell> row = instructorRel.getRow(i);
-            int id = row.get(0).getAsInt(); 
-            instructorIDs.add(id);
-        }
-
-        Relation advisorsNotInstructors = new RelationBuilder()
-            .attributeNames(advisorRel.getAttrs())
-            .attributeTypes(advisorRel.getTypes())
-            .build();
-
-        for (int i = 0; i < advisorRel.getSize(); i++) {
-            List<Cell> row = advisorRel.getRow(i);
-            int advisorID = row.get(1).getAsInt();
-            if (!instructorIDs.contains(advisorID)) {
-                advisorsNotInstructors.insert(new ArrayList<>(row));
-            }
-        }
-
-        System.out.println("Prints all Advisors who are not instructors (should be empty)");
-        ra.print50(advisorsNotInstructors);
+        System.out.println("\n\nPrints the difference between Instructors with a Salary greater than 50k and Instructors in Comp. Sci. That result is then natural joined with advisors");
+        ra.print50(query1);
 
 
 
         Relation q2ProjectedHistory = ra.select(studentsRel, row -> row.get(studentsRel.getAttrIndex("dept_name")).equals(Cell.val("History")));
         Relation q2ProjectedMarketing = ra.select(studentsRel, row -> row.get(studentsRel.getAttrIndex("dept_name")).equals(Cell.val("Marketing")));
-        Relation query2 = ra.union(q2ProjectedHistory, q2ProjectedMarketing);
+        Relation unionOfProject = ra.union(q2ProjectedHistory, q2ProjectedMarketing);
+        Relation selectedTakes = ra.project(takesRel, List.of("semester","year"));
+        Relation query2 = ra.cartesianProduct(unionOfProject, selectedTakes);
 
-        System.out.println("\n\nUnion of Students in the History and Marketing departments");
+        System.out.println("\n\nUnion of Students in the History and Marketing departments with Cartesian of Semester, Year from Takes");
         ra.print50(query2);
 
 
 
         Relation q3ProjectedStu = ra.project(studentsRel, List.of("name", "dept_name"));
         Relation q3ProjectedIns = ra.project(instructorRel, List.of("name", "dept_name"));
-        Relation query3 = ra.union(q3ProjectedStu, q3ProjectedIns);
+        Relation q3Union = ra.union(q3ProjectedStu, q3ProjectedIns);
+        Relation query3 = ra.rename(q3Union, q3Union.getAttrs(), List.of("First Name", "Department"));
 
-        System.out.println("\n\nName, Dept_Name of Student U Instructor");
+        System.out.println("\n\nName, Dept_Name of Student U Instructor, which is renamed to be First Name and Department");
         ra.print50(query3);
 
 
