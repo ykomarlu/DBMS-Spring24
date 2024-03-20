@@ -1,0 +1,49 @@
+<!--
+Copyright (c) 2024 Sami Menik, PhD. All rights reserved.
+
+This is a project developed by Dr. Menik to give the students an opportunity to apply database concepts learned in the class in a real world project. Permission is granted to host a running version of this software and to use images or videos of this work solely for the purpose of demonstrating the work to potential employers. Any form of reproduction, distribution, or transmission of the software's source code, in part or whole, without the prior written consent of the copyright owner, is strictly prohibited.
+-->
+<div class="post framed">
+    <img src="{{user.profileImagePath}}" alt="User avatar">
+    <div class="post-body">
+        <div class="username">
+            <a href="/profile/{{user.userId}}">{{user.firstName}} {{user.lastName}}</a>
+        </div>
+        <div class="post-date">{{postDate}}</div>
+        <div class="post-content">
+            {{content}}
+        </div>
+        <div class="post-actions">
+            <a href="/post/{{postId}}" class="far fa-comment"></a>
+            <span class="action-count">{{commentsCount}}</span>
+            <!-- show if the post is hearted by the user -->
+            {{#isHearted}}
+            <form method="get" action="/post/{{postId}}/heart/false">
+                <button class="fa fa-heart"></button>
+            </form>
+            {{/isHearted}}
+            <!-- show if the post is not hearted by the user -->
+            {{^isHearted}}
+            <form method="get" action="/post/{{postId}}/heart/true">
+                <button class="far fa-heart"></button>
+            </form>
+            {{/isHearted}}
+            <span class="action-count">{{heartsCount}}</span>
+            <!-- show if the post is bookmarked by the user -->
+            {{#isBookmarked}}
+            <form method="get" action="/post/{{postId}}/bookmark/false">
+                <button class="fa fa-bookmark"></button>
+            </form>
+            {{/isBookmarked}}
+            <!-- show if the post is not bookmarked by the user -->
+            {{^isBookmarked}}
+            <form method="get" action="/post/{{postId}}/bookmark/true">
+                <button class="far fa-bookmark"></button>
+            </form>
+            {{/isBookmarked}}
+        </div>
+        {{#isShowComents}}
+        {{> fragments/comments_container}}
+        {{/isShowComents}}
+    </div>
+</div>

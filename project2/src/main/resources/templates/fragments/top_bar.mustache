@@ -1,0 +1,24 @@
+<!--
+Copyright (c) 2024 Sami Menik, PhD. All rights reserved.
+
+This is a project developed by Dr. Menik to give the students an opportunity to apply database concepts learned in the class in a real world project. Permission is granted to host a running version of this software and to use images or videos of this work solely for the purpose of demonstrating the work to potential employers. Any form of reproduction, distribution, or transmission of the software's source code, in part or whole, without the prior written consent of the copyright owner, is strictly prohibited.
+-->
+<div class="separator-bottom">
+    <div class="title-bar content-center">
+        CSCI 4370 MICROBLOGGING PLATFORM
+        <form action="/hashtagsearch" method="get">
+            <input name="hashtags" class="short-input" type="text" placeholder="Search hashtags">
+        </form>
+    </div>
+</div>
+<div class="separator-bottom">
+    <nav class="content-center">
+        <a href="/">Home</a>
+        <a href="/profile">Profile</a>
+        <a href="/people">People</a>
+        <a href="/bookmarks">Bookmarks</a>
+        <a href="/login">Logout</a>
+    </nav>
+</div>
+
+{{> fragments/error_message}}

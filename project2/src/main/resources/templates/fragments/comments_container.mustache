@@ -1,0 +1,10 @@
+<div class="comments">
+    {{#comments}}
+    {{> fragments/comment}}
+    {{/comments}}
+
+    <form method="post" action="/post/{{postId}}/comment">
+        <input name="comment" class="short-input full" type="text" 
+                placeholder="Enter your comment here">
+    </form>
+</div>

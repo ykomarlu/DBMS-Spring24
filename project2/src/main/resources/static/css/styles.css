@@ -1,0 +1,215 @@
+/**
+Copyright (c) 2024 Sami Menik, PhD. All rights reserved.
+
+This is a project developed by Dr. Menik to give the students an opportunity to apply database concepts learned in the class in a real world project. Permission is granted to host a running version of this software and to use images or videos of this work solely for the purpose of demonstrating the work to potential employers. Any form of reproduction, distribution, or transmission of the software's source code, in part or whole, without the prior written consent of the copyright owner, is strictly prohibited.
+*/
+
+:root{
+    --normal-text-color: #14171a;
+    --frame-color: #98b1c6;
+    --box-color: #fff;
+    --action-item-color: #657786;
+    --highlight-color: #1da1f2;
+}
+body {
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    color: var(--normal-text-color);
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+}
+nav {
+    background: var(--box-color);
+    padding: 16pt 0;
+    text-align: left;
+}
+nav a {
+    text-decoration: none;
+    margin-right: 16pt;
+    color: var(--normal-text-color);;
+    font-weight: bold;
+    display: inline-block;
+}
+nav a:hover {
+    color: var(--highlight-color);
+}
+.framed {
+    border: 0.8pt solid var(--frame-color);
+    border-radius: 4pt;
+}
+.separator-bottom {
+    border-bottom: 0.8pt solid var(--frame-color);
+}
+.title-bar {
+    font-size: 12pt;
+    color: var(--action-item-color);
+    padding: 8pt 0;
+    text-align: left;
+}
+.title-bar form {
+    display: inline-block;
+    margin-left: 8pt;
+}
+.action-button {
+    /* background-color: #657786; */
+    background-color: var(--box-color);;
+    color: var(--action-item-color);
+    border: 1.2pt solid var(--action-item-color);
+    border-radius: 16pt;
+    padding: 8pt 16pt;
+    cursor: pointer;
+}
+.action-button:hover {
+    color: var(--highlight-color);
+    border: 1.2pt solid var(--highlight-color);
+}
+.short-input {
+    padding: 8pt 16pt;
+    margin: 8pt;
+    border: 0.8pt solid var(--action-item-color);
+    border-radius: 16pt;
+}
+.short-input:hover {
+    border: 1.2pt solid var(--highlight-color);
+}
+.short-input.full {
+    width: calc(100% - 32pt);
+    margin-top: 0;
+    margin-left: 0;
+    margin-right: 0;
+}
+.content-center {
+    max-width: 480pt;
+    margin: 0 auto;
+}
+.container {
+    max-width: 480pt;
+    margin: 24pt auto;
+    background-color: var(--box-color);
+    border-radius: 4pt;
+}
+.container.narrow {
+    max-width: 300pt;
+}
+.center-align{
+    text-align: center;
+}
+.post-form textarea {
+    width: calc(100% - 16pt);
+    padding: 8pt;
+    margin: 8pt;
+    resize: vertical;
+    box-sizing: border-box;
+}
+.post-form textarea:hover {
+    border: 1.2pt solid var(--highlight-color);
+}
+.post-form .action-button {
+    float: right;
+    margin-right: 8pt;
+    margin-bottom: 8pt;
+}
+.post {
+    padding: 16pt;
+    margin-bottom: 8pt;
+    position: relative;
+    display: block;
+}
+.post img {
+    position: absolute;
+    border-radius: 50%;
+    width: 36pt;
+    height: 36pt;
+    margin-right: 8pt;
+    border: 1pt solid var(--normal-text-color);
+}
+.post a {
+    color: var(--normal-text-color);
+    /* text-decoration: none; */
+}
+.post-body {
+    margin-left: 50pt;
+}
+.post-date {
+    color: var(--action-item-color);
+    font-size: 0.85rem;
+    margin: 3pt 0;
+    display: inline-block;
+}
+.post-content {
+    margin-bottom: 8pt;
+    line-height: 1.5;
+}
+.post-actions {
+    margin-top: 8pt;
+    display: flex;
+    align-items: center;
+}
+.post-actions a, .post-actions button, 
+.post-actions .action-count {
+    margin-right: 8pt;
+    color: var(--action-item-color);
+    cursor: pointer;    
+    background: none;
+    border: none;
+    display: inline;
+    padding: 0;
+    font-size: 12pt;
+    text-decoration: none;
+}
+.post-actions form {
+    display: inline;
+}
+.post-actions .action-count {
+    vertical-align: middle;
+    margin-left: -4pt;
+}
+.post-actions .action-count:hover {
+    color: var(--action-item-color);
+}
+.post-actions *:hover {
+    color: var(--highlight-color)
+}
+.post .comments {
+    margin-top: 16pt;
+    display: block;
+}
+.user-follow {
+    position: absolute;
+    margin: 18pt;
+    top: 0pt;
+    right: 0pt;
+    color: var(--action-item-color);
+}
+.user-follow *:hover {
+    color: var(--highlight-color);
+}
+.username {
+    font-weight: bold;
+    display: block;
+}
+.clear {
+    clear: both;
+}
+.error-message {
+    margin: 24pt 0;
+    color: #d61111;
+}
+.no-content-message {
+    margin: 24pt 0;
+}
+.footer {
+    text-align: left;
+    padding-top: 24pt;
+    padding-bottom: 16pt;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    color: var(--action-item-color);
+}
+.footer p {
+    font-size: 10pt;
+}
+.link {
+    margin-left: 16pt;
+}
