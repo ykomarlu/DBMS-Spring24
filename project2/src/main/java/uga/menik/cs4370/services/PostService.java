@@ -16,11 +16,13 @@ import javax.sql.DataSource;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.context.annotation.SessionScope;
 
 import uga.menik.cs4370.models.User;
 import uga.menik.cs4370.models.Post;
 
 @Service
+@SessionScope
 public class PostService {
     private final DataSource dataSource;
     private final User loggedInUser;
