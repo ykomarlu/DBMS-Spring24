@@ -21,7 +21,7 @@ CREATE TABLE User (
 );
 
 CREATE TABLE Post ( 
-    postId int NOT NULL,
+    postId int NOT NULL auto_increment,
     userId int NOT NULL, 
     postDate datetime NOT NULL default NOW(), 
     postText varchar(255) NOT NULL, 
@@ -54,7 +54,7 @@ CREATE TABLE Hashtag (
 );
 
 CREATE TABLE Comment (
-    commentId int not null, 
+    commentId int not null auto_increment, 
     postId int not null, 
     userId int not null,
     commentDate date not null,

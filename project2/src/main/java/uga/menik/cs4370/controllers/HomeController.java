@@ -73,10 +73,12 @@ public class HomeController {
     @PostMapping("/createpost")
     public String createPost(@RequestParam(name = "posttext") String postText) {
         try {
+            System.out.println(postText);
             postService.newPost(postText);
 
             return "redirect:/";
         } catch (Exception e) {
+            System.out.println(e.getMessage());
             String message = URLEncoder.encode("Failed to create the post. Please try again.",StandardCharsets.UTF_8);
             return "redirect:/?error=" + message;
         }
