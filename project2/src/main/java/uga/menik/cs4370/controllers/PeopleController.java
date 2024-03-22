@@ -20,7 +20,6 @@ import org.springframework.web.servlet.ModelAndView;
 import uga.menik.cs4370.models.FollowableUser;
 import uga.menik.cs4370.services.PeopleService;
 import uga.menik.cs4370.services.UserService;
-import uga.menik.cs4370.utility.Utility;
 
 /**
  * Handles /people URL and its sub URL paths.
@@ -29,9 +28,18 @@ import uga.menik.cs4370.utility.Utility;
 @RequestMapping("/people")
 public class PeopleController {
 
-    // Inject UserService and PeopleService instances.
-    // See LoginController.java to see how to do this.
-    // Hint: Add a constructor with @Autowired annotation.
+    private final UserService userService;
+    private final PeopleService peopleService;
+
+    /**
+     * See notes in AuthInterceptor.java regarding how this works 
+     * through dependency injection and inversion of control.
+     */
+    @Autowired
+    public PeopleController(UserService userService, PeopleService peopleService) {
+        this.userService = userService;
+        this.peopleService = peopleService;
+    }
 
     /**
      * Serves the /people web page.
@@ -49,7 +57,7 @@ public class PeopleController {
         // You should replace it with actual data from the database.
         // Use the PeopleService instance to find followable users.
         // Use UserService to access logged in userId to exclude.
-        List<FollowableUser> followableUsers = Utility.createSampleFollowableUserList();
+        List<FollowableUser> followableUsers = peopleService.getFollowableUsers(userService.getLoggedInUser().getUserId());
         mv.addObject("users", followableUsers);
 
         // If an error occured, you can set the following property with the

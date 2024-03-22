@@ -5,18 +5,35 @@ This is a project developed by Dr. Menik to give the students an opportunity to 
 */
 package uga.menik.cs4370.services;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 
+import javax.sql.DataSource;
+
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import uga.menik.cs4370.models.FollowableUser;
-import uga.menik.cs4370.utility.Utility;
 
 /**
  * This service contains people related functions.
  */
 @Service
 public class PeopleService {
+    private final DataSource dataSource;
+
+    /**
+     * See AuthInterceptor notes regarding dependency injection and
+     * inversion of control.
+     */
+    @Autowired
+    public PeopleService(DataSource dataSource) {
+        this.dataSource = dataSource;
+    }
     
     /**
      * This function should query and return all users that 
@@ -26,18 +43,45 @@ public class PeopleService {
     public List<FollowableUser> getFollowableUsers(String userIdToExclude) {
         // Write an SQL query to find the users that are not the current user.
 
-        // Run the query with a datasource.
-        // See UserService.java to see how to inject DataSource instance and
-        // use it to run a query.
+        final String sql = "select f.followeeUserId as id, p.postDate as active from follow f join post p on f.followeeUserId=p.userId where f.followerUserId = ?;";
+        final String sql2 = "select * from user where userId != ?";
+        List<Integer> followList = new ArrayList<Integer>();
+        List<String> activeDate = new ArrayList<String>();
+        try (Connection conn = dataSource.getConnection();
+            PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
-        // Use the query result to create a list of followable users.
-        // See UserService.java to see how to access rows and their attributes
-        // from the query result.
-        // Check the following createSampleFollowableUserList function to see 
-        // how to create a list of FollowableUsers.
+            pstmt.setString(1, userIdToExclude);
 
-        // Replace the following line and return the list you created.
-        return Utility.createSampleFollowableUserList();
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    followList.add(rs.getInt("id"));
+                    activeDate.add(rs.getString("active"));
+                }
+            }
+        } catch (SQLException se) {
+            System.out.println(se.getMessage());
+        }
+        List<FollowableUser> userList = new ArrayList<FollowableUser>();
+        try (Connection conn = dataSource.getConnection();
+            PreparedStatement pstmt = conn.prepareStatement(sql2)) {
+
+            pstmt.setString(1, userIdToExclude);
+            int iterable = 0;
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    String active = "Never";
+                    if (activeDate.size() - 1 > iterable) {
+                        active = activeDate.get(iterable);
+                    }
+                    userList.add(new FollowableUser(rs.getString("userId"), rs.getString("firstName"), rs.getString("lastName"), followList.contains(rs.getInt("userId")), active));
+                    iterable++;
+                }
+            }
+        } catch (SQLException se) {
+            System.out.println(se.getMessage());
+        }
+        return userList;
     }
 
 }

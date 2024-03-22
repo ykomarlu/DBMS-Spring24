@@ -1,11 +1,12 @@
 -- Create the database.
-create database if not exists cs4370_mb_platform;
+DROP DATABASE cs4370_mb_platform;
+CREATE DATABASE IF NOT EXISTS cs4370_mb_platform;
 
 -- Use the created database.
-use cs4370_mb_platform;
+USE cs4370_mb_platform;
 
 -- Create the user table.
-create table if not exists user (
+CREATE TABLE User (
     userId int auto_increment,
     username varchar(255) not null,
     password varchar(255) not null,
@@ -21,7 +22,7 @@ create table if not exists user (
 CREATE TABLE Post ( 
     postId int NOT NULL,
     userId int NOT NULL, 
-    postDate date NOT NULL, 
+    postDate date NOT NULL default NOW(), 
     postText varchar(255) NOT NULL, 
     primary key(postId), 
     foreign key(userId) references user(userId) 
