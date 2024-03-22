@@ -38,25 +38,61 @@ public class PostService {
     }
     
     /**
-     * This function should query and return all users that 
-     * are followable. The list should not contain the user 
-     * with id userIdToExclude.
+    * Gets all available posts
      */
-    public List<Post> getPosts(String userIdToExclude) {
+    public List<Post> getAllPosts() {
+        final String heartIdListSQL = "select postId from heart where userId = ?";
+        final String bookmarkIdListSQL = "select postId from bookmark where userId = ?";
 
-        final String sql = "select * from post";
+        final String postSelectSQL = 
+        "select p.userId as user, u.firstName as firstName, u.lastName as lastName, p.postId as postId, p.postText as content, p.postDate as postDate, count(h.userId) as heartsCount, count(c.userId) as commentsCount\n" + //
+        "from post p \n" + //
+        "join heart h on p.postId = h.postId\n" + //
+        "join comment c on p.postId = c.postId\n" + //
+        "join user u on p.userId = u.userId\n" + //
+        "group by postId";
+
+        List<String> bookmarkedIds = new ArrayList<String>();
+        List<String> heartedIds = new ArrayList<String>();
         List<Post> postList = new ArrayList<Post>();
-        try (Connection conn = dataSource.getConnection();
-            PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
-            try (ResultSet rs = pstmt.executeQuery()) {
+        try (Connection conn = dataSource.getConnection()) {
+            PreparedStatement hearts = conn.prepareStatement(heartIdListSQL);
+            hearts.setString(1, loggedInUser.getUserId());
+            try (ResultSet rs = hearts.executeQuery()) {
                 while (rs.next()) {
-                    // postList.add(new )
+                    heartedIds.add(rs.getString("postId"));
+                }
+            }
+
+            PreparedStatement bookmarks = conn.prepareStatement(bookmarkIdListSQL);
+            try (ResultSet rs = bookmarks.executeQuery()) {
+                bookmarks.setString(1, loggedInUser.getUserId());
+                while (rs.next()) {
+                    bookmarkedIds.add(rs.getString("postId"));
+                }
+            }
+
+            PreparedStatement posts = conn.prepareStatement(postSelectSQL);
+            try (ResultSet rs = posts.executeQuery()) {
+                while (rs.next()) {
+                    postList.add(new Post(
+                            rs.getString("postId"), 
+                            rs.getString("content"), 
+                            rs.getString("postDate"), 
+                            new User(rs.getString("user"), rs.getString("firstName"), rs.getString("lastName")), 
+                            rs.getInt("heartsCount"), 
+                            rs.getInt("commentsCount"), 
+                            heartedIds.contains(rs.getString("postId")),
+                            bookmarkedIds.contains(rs.getString("postId"))
+                        )
+                    );
                 }
             }
         } catch (SQLException se) {
             System.out.println(se.getMessage());
         }
+
         return postList;
     }
 
@@ -75,5 +111,4 @@ public class PostService {
             return rowsAffected > 0;
         }
     }
-
 }
