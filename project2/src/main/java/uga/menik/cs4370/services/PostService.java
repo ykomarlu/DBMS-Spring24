@@ -56,9 +56,9 @@ public class PostService {
         List<String> heartedIds = new ArrayList<String>();
         List<Post> postList = new ArrayList<Post>();
 
-        
         try (Connection conn = dataSource.getConnection()) {
             PreparedStatement hearts = conn.prepareStatement(heartIdListSQL);
+            hearts.setString(1, loggedInUser.getUserId());
             try (ResultSet rs = hearts.executeQuery()) {
                 while (rs.next()) {
                     heartedIds.add(rs.getString("postId"));
@@ -67,6 +67,7 @@ public class PostService {
 
             PreparedStatement bookmarks = conn.prepareStatement(bookmarkIdListSQL);
             try (ResultSet rs = bookmarks.executeQuery()) {
+                bookmarks.setString(1, loggedInUser.getUserId());
                 while (rs.next()) {
                     bookmarkedIds.add(rs.getString("postId"));
                 }
