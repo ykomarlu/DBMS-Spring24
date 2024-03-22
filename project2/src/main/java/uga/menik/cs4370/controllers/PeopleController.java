@@ -53,23 +53,19 @@ public class PeopleController {
         // See notes on ModelAndView in BookmarksController.java.
         ModelAndView mv = new ModelAndView("people_page");
 
-        // Following line populates sample data.
-        // You should replace it with actual data from the database.
-        // Use the PeopleService instance to find followable users.
-        // Use UserService to access logged in userId to exclude.
-        List<FollowableUser> followableUsers = peopleService.getFollowableUsers(userService.getLoggedInUser().getUserId());
-        mv.addObject("users", followableUsers);
+        try {
+            List<FollowableUser> followableUsers = peopleService.getFollowableUsers(userService.getLoggedInUser().getUserId());
 
-        // If an error occured, you can set the following property with the
-        // error message to show the error message to the user.
-        // An error message can be optionally specified with a url query parameter too.
-        String errorMessage = error;
-        mv.addObject("errorMessage", errorMessage);
+            if (followableUsers.size() == 0) {
+                mv.addObject("isNoContent", true);
+            } else {
+                mv.addObject("users", followableUsers);
+            }
+        } catch (Exception e) {
+            String errorMessage = e.getMessage();
+            mv.addObject("errorMessage", errorMessage);
+        }
 
-        // Enable the following line if you want to show no content message.
-        // Do that if your content list is empty.
-        // mv.addObject("isNoContent", true);
-        
         return mv;
     }
 
