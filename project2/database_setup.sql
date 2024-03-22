@@ -20,6 +20,10 @@ CREATE TABLE User (
     constraint lastName_min_length check (char_length(trim(lastName)) >= 2)
 );
 
+
+
+-- insert into User values ()
+
 CREATE TABLE Post ( 
     postId int NOT NULL,
     userId int NOT NULL, 
@@ -29,6 +33,8 @@ CREATE TABLE Post (
     foreign key(userId) references user(userId) 
 );
 
+
+
 CREATE TABLE Heart (
     postId int NOT NULL,
     userId int NOT NULL,
@@ -36,6 +42,8 @@ CREATE TABLE Heart (
     foreign key(postId) references post(postId), 
     foreign key(userId) references user(userId) 
 );
+
+
 
 CREATE TABLE Bookmark ( 
     postId int NOT NULL,
@@ -53,6 +61,8 @@ CREATE TABLE Hashtag (
     foreign key(postId) references post(postId)
 );
 
+
+
 CREATE TABLE Comment (
     commentId int not null, 
     postId int not null, 
@@ -65,6 +75,7 @@ CREATE TABLE Comment (
 );
 
 
+
 CREATE TABLE Follow ( 
     followerUserId int NOT NULL, 
     followeeUserId int NOT NULL, 
@@ -72,5 +83,13 @@ CREATE TABLE Follow (
     foreign key(followerUserId) references user(userId), 
     foreign key(followeeUserId) references user(userId) 
 );
+
+insert into User values (1, "alex_brashaw", "12345", "Alex", "Bradshaw"),(2, "jon_green", "789o", "Jon", "Green"),(3, "yush_komarlu", "Inc@ntat3m", "Yushus", "Komarlu");
+insert into Post values (1, 1, now(), "First Post by Alex"),(2, 1, now(), "Second Post by Alex"),(3, 2, now(), "First Post by Jon");
+insert into Hashtag values ("Draft", 2),("Published", 3);
+insert into Comment values (1, 2, 3, '2024-03-20'),(2, 3, 3, '2021-04-24');
+insert into Bookmark values (3, 2),(1, 1);
+insert into Heart value (2, 1);
+insert into Follow values (1, 2),(1, 3),(2, 1);
 
 -- Order of Creating Tables: User, Post, Hashtag, comment, bookmark, heart, follow
