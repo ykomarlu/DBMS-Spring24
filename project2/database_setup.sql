@@ -1,3 +1,4 @@
+-- Active: 1680621551034@@127.0.0.1@3306@cs4370_mb_platform
 -- Create the database.
 DROP DATABASE cs4370_mb_platform;
 CREATE DATABASE IF NOT EXISTS cs4370_mb_platform;
@@ -22,7 +23,7 @@ CREATE TABLE User (
 CREATE TABLE Post ( 
     postId int NOT NULL,
     userId int NOT NULL, 
-    postDate date NOT NULL default NOW(), 
+    postDate datetime NOT NULL default NOW(), 
     postText varchar(255) NOT NULL, 
     primary key(postId), 
     foreign key(userId) references user(userId) 
