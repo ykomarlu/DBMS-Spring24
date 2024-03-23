@@ -37,17 +37,15 @@ public class UserService {
     private final BCryptPasswordEncoder passwordEncoder;
     // This holds 
     private User loggedInUser = null;
-    private HttpSession session;
 
     /**
      * See AuthInterceptor notes regarding dependency injection and
      * inversion of control.
      */
     @Autowired
-    public UserService(DataSource dataSource, HttpSession session) {
+    public UserService(DataSource dataSource) {
         this.dataSource = dataSource;
         this.passwordEncoder = new BCryptPasswordEncoder();
-        this.session = session;
     }
 
     /**
@@ -79,7 +77,6 @@ public class UserService {
 
                         // Initialize and retain the logged in user.
                         loggedInUser = new User(userId, firstName, lastName);
-                        System.out.println("Logged IN");
                     }
                     return isPassMatch;
                 }

@@ -41,46 +41,49 @@ public class PeopleService {
      * with id userIdToExclude.
      */
     public List<FollowableUser> getFollowableUsers(String userIdToExclude) {
-        // Write an SQL query to find the users that are not the current user.
-
-        final String sql = "select f.followeeUserId as id, p.postDate as active from follow f join post p on f.followeeUserId=p.userId where f.followerUserId = ?;";
-        final String sql2 = "select * from user where userId != ?";
         List<Integer> followList = new ArrayList<Integer>();
         List<String> activeDate = new ArrayList<String>();
-        try (Connection conn = dataSource.getConnection();
-            PreparedStatement pstmt = conn.prepareStatement(sql)) {
-
-            pstmt.setString(1, userIdToExclude);
-
-            try (ResultSet rs = pstmt.executeQuery()) {
-                while (rs.next()) {
-                    followList.add(rs.getInt("id"));
-                    activeDate.add(rs.getString("active"));
-                }
-            }
-        } catch (SQLException se) {
-            System.out.println(se.getMessage());
-        }
         List<FollowableUser> userList = new ArrayList<FollowableUser>();
-        try (Connection conn = dataSource.getConnection();
-            PreparedStatement pstmt = conn.prepareStatement(sql2)) {
 
-            pstmt.setString(1, userIdToExclude);
-            int iterable = 0;
+        try (Connection conn = dataSource.getConnection()) {
+            PreparedStatement followers = conn.prepareStatement("select followeeUserId as id from follow where followerUserId = ?");
 
-            try (ResultSet rs = pstmt.executeQuery()) {
-                while (rs.next()) {
-                    String active = "Never";
-                    if (activeDate.size() - 1 > iterable) {
-                        active = activeDate.get(iterable);
+                followers.setString(1, userIdToExclude);
+
+                try (ResultSet rs = followers.executeQuery()) {
+                    while (rs.next()) {
+                        followList.add(rs.getInt("id"));
                     }
-                    userList.add(new FollowableUser(rs.getString("userId"), rs.getString("firstName"), rs.getString("lastName"), followList.contains(rs.getInt("userId")), active));
-                    iterable++;
                 }
-            }
+
+                PreparedStatement active = conn.prepareStatement("select followeeUserId as id from follow where followerUserId = ?");
+
+                active.setString(1, userIdToExclude);
+
+                try (ResultSet rs = active.executeQuery()) {
+                    while (rs.next()) {
+                        activeDate.add(rs.getString("active"));
+                    }
+                }
+                
+            PreparedStatement excludedUser = conn.prepareStatement("SELECT * FROM User LEFT JOIN Post ON User.userId = Post.userId where User.userId != ?");
+                excludedUser.setString(1, userIdToExclude);
+                int iterable = 0;
+
+                try (ResultSet rs = excludedUser.executeQuery()) {
+                    while (rs.next()) {
+                        String activeStatus = "Never";
+                        if (activeDate.size() - 1 > iterable) {
+                            activeStatus = activeDate.get(iterable);
+                        }
+                        userList.add(new FollowableUser(rs.getString("userId"), rs.getString("firstName"), rs.getString("lastName"), !followList.contains(rs.getInt("userId")), activeStatus));
+                        iterable++;
+                    }
+                }
         } catch (SQLException se) {
             System.out.println(se.getMessage());
         }
+
         return userList;
     }
 
