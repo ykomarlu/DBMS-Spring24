@@ -130,5 +130,25 @@ public class UserService {
             return rowsAffected > 0;
         }
     }
-
+/*
+* this method is for profile.
+*/
+    public User getUserById(String userId) throws SQLException {
+        String sql = "SELECT * FROM user WHERE userId = ?";
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, userId);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    return new User(
+                        rs.getString("userId"),
+                        rs.getString("firstName"),
+                        rs.getString("lastName")
+                    );
+                }
+            }
+        }
+        throw new IllegalArgumentException("User not found with ID: " + userId);
+    }
+    
 }
