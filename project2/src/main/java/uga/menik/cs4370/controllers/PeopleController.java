@@ -7,7 +7,12 @@ package uga.menik.cs4370.controllers;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
 import java.util.List;
+import javax.sql.DataSource;
+
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -30,6 +35,7 @@ public class PeopleController {
 
     private final UserService userService;
     private final PeopleService peopleService;
+    private final DataSource dataSource;
 
     /**
      * See notes in AuthInterceptor.java regarding how this works 
@@ -81,11 +87,36 @@ public class PeopleController {
      */
     @GetMapping("{userId}/follow/{isFollow}")
     public String followUnfollowUser(@PathVariable("userId") String userId,
-            @PathVariable("isFollow") Boolean isFollow) {
+            @PathVariable("isFollow") Boolean isFollow) throws SQLException{
+        
         System.out.println("User is attempting to follow/unfollow a user:");
         System.out.println("\tuserId: " + userId);
         System.out.println("\tisFollow: " + isFollow);
-
+        
+        if(isFollow == true) {
+            String sql = "insert into follow values (?,?)";
+            try (Connection conn = dataSource.getConnection(); 
+                PreparedStatement pstmt = conn.prepareStatement(sql)) {
+                
+                pstmt.setString(1, userService.getLoggedInUser().getUserId());
+                pstmt.setString(2, userId);
+                int rowsAffected = pstmt.executeUpdate();
+                if(rowsAffected > 0)
+                    return "redirect:/people";
+            }
+            
+        }
+        else{
+            String sql = "delete from follow where followeeUserId = ? and followerUserId = ?;";
+            try (Connection conn = dataSource.getConnection();
+                PreparedStatement pstmt = conn.prepareStatement(sql)){
+                    pstmt.setString(1, userId);
+                    pstmt.setString(2, userService.getLoggedInUser().getUserId());
+                    int rowsAffected = pstmt.executeUpdate();
+                    if(rowsAffected > 0)
+                        return "redirect:/people";
+                }
+        }
         // Redirect the user if the comment adding is a success.
         // return "redirect:/people";
 
