@@ -45,7 +45,7 @@ public class PeopleController {
     public PeopleController(UserService userService, PeopleService peopleService, DataSource dataSource) {
         this.userService = userService;
         this.peopleService = peopleService;
-        this.dataSourse = dataSource;
+        this.dataSource = dataSource;
     }
 
     /**
