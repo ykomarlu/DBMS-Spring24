@@ -73,6 +73,7 @@ public class HomeController {
     @PostMapping("/createpost")
     public String createPost(@RequestParam(name = "posttext") String postText) {
         try {
+            System.out.println("Post text: " + postText);
             postService.newPost(postText);
 
             return "redirect:/";

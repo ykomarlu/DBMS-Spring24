@@ -30,20 +30,17 @@ import uga.menik.cs4370.models.Comment;
 public class PostService {
     private final DataSource dataSource;
     private final User loggedInUser;
-    private HttpSession session;
+    // private HttpSession session;
 
     /**
      * See AuthInterceptor notes regarding dependency injection and
      * inversion of control.
      */
     @Autowired
-    public PostService(DataSource dataSource, HttpSession session) {
+    public PostService(DataSource dataSource, UserService userService) {
         this.dataSource = dataSource;
-        this.session = session;
-        this.loggedInUser = (User) this.session.getAttribute("loggedInUser");
-        if (loggedInUser != null) {
-            System.out.println(true);
-        }
+        this.loggedInUser = userService.getLoggedInUser();
+        // this.session = session;
     }
     
     /**
@@ -199,9 +196,11 @@ public class PostService {
      * Returns true if new post is successful.
      */
     public boolean newPost(String content) throws SQLException {
+        System.out.println("Reached");
         final String newPost = "insert into post (postText, userId) values (?, ?)";
         try (Connection conn = dataSource.getConnection(); PreparedStatement postStatement = conn.prepareStatement(newPost)) {
             postStatement.setString(1, content);
+            System.out.println("User Id: " + (loggedInUser.getUserId()));
             postStatement.setInt(2, Integer.parseInt(loggedInUser.getUserId()));
 
             int rowsAffected = postStatement.executeUpdate();

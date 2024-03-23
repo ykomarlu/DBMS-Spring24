@@ -12,7 +12,7 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.List;
 import javax.sql.DataSource;
-
+import javax.xml.crypto.Data;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -42,9 +42,10 @@ public class PeopleController {
      * through dependency injection and inversion of control.
      */
     @Autowired
-    public PeopleController(UserService userService, PeopleService peopleService) {
+    public PeopleController(UserService userService, PeopleService peopleService, DataSource dataSource) {
         this.userService = userService;
         this.peopleService = peopleService;
+        this.dataSource = dataSource;
     }
 
     /**
