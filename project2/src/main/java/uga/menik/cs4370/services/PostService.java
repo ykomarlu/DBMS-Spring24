@@ -225,4 +225,44 @@ public class PostService {
             return false;
         }
     }
+    /*
+    *this is for the profile thing.
+    */
+ public List<Post> getPostsByUserIdOrderByDateDesc(String userId) {
+        List<Post> posts = new ArrayList<>();
+        String sql = "SELECT p.*, u.firstName, u.lastName " +
+                     "FROM post p " +
+                     "JOIN user u ON p.userId = u.userId " +
+                     "WHERE p.userId = ? " +
+                     "ORDER BY p.postDate DESC";
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, userId);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    User user = new User(
+                        rs.getString("userId"),
+                        rs.getString("firstName"),
+                        rs.getString("lastName")
+                    );
+                    Post post = new Post(
+                        rs.getString("postId"),
+                        rs.getString("postText"),
+                        rs.getString("postDate"),
+                        user,
+                        0, // Placeholder for heartsCount
+                        0, // Placeholder for commentsCount
+                        false, // Placeholder for isHearted
+                        false // Placeholder for isBookmarked
+                    );
+                    posts.add(post);
+                }
+            }
+        } catch (SQLException e) {
+            // Handle the exception
+            e.printStackTrace();
+        }
+        return posts;
+    }
+    
 }
