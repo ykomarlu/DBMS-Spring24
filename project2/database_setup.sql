@@ -1,4 +1,3 @@
--- Active: 1680621551034@@127.0.0.1@3306@cs4370_mb_platform
 -- Create the database.
 DROP DATABASE cs4370_mb_platform;
 CREATE DATABASE IF NOT EXISTS cs4370_mb_platform;
@@ -84,10 +83,10 @@ CREATE TABLE Follow (
     foreign key(followeeUserId) references user(userId) 
 );
 
-insert into User values (1, "alex_brashaw", "12345", "Alex", "Bradshaw"),(2, "jon_green", "789o", "Jon", "Green"),(3, "yush_komarlu", "Inc@ntat3m", "Yushus", "Komarlu");
+insert into User values (1, "alex_bradshaw", "12345", "Alex", "Bradshaw"),(2, "jon_green", "789o", "Jon", "Green"),(3, "yush_komarlu", "Inc@ntat3m", "Yushus", "Komarlu");
 insert into Post values (1, 1, now(), "First Post by Alex"),(2, 1, now(), "Second Post by Alex"),(3, 2, now(), "First Post by Jon");
 insert into Hashtag values ("Draft", 2),("Published", 3);
-insert into Comment values (1, 2, 3, '2024-03-20'),(2, 3, 3, '2021-04-24');
+insert into Comment values (1, 2, 3, '2024-03-20', 'comment'),(2, 3, 3, '2021-04-24', 'yay comment test');
 insert into Bookmark values (3, 2),(1, 1);
 insert into Heart value (2, 1);
 insert into Follow values (1, 2),(1, 3),(2, 1);
