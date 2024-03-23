@@ -18,8 +18,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.context.annotation.SessionScope;
 
-import uga.menik.cs4370.models.User;
+import uga.menik.cs4370.models.Comment;
+import uga.menik.cs4370.models.ExpandedPost;
 import uga.menik.cs4370.models.Post;
+import uga.menik.cs4370.models.User;
 
 @Service
 @SessionScope
@@ -43,12 +45,12 @@ public class PostService {
     /**
     * Gets a post by its ID
      */
-    public Post getPostById(int postId) {
+    public ExpandedPost getPostById(int postId) {
         final String heartIdListSQL = "select postId from heart where userId = ? and postId = ?";
         final String heartCountSQL = "select count(userId) as count from heart where postId = ?";
 
         final String bookmarkIdListSQL = "select postId from bookmark where userId = ? and postId = ?";
-        final String commentCountSQL = "select count(userId) as count from comment where postId = ?";
+        final String commentCountSQL = "select * from comment where postId = ?";
 
         final String postSelectSQL = 
         "select p.userId as user, u.firstName as firstName, u.lastName as lastName, p.postId as postId, p.postText as content, p.postDate as postDate from post p join user u on p.userId = u.userId where p.postId = ?";
@@ -59,7 +61,10 @@ public class PostService {
         int heartCount = 0;
         int commentCount = 0;
 
-        Post post = null;
+        List<Comment> comments = new ArrayList<Comment>();
+        List<User> users = new ArrayList<User>();
+
+        ExpandedPost post = null;
 
         try (Connection conn = dataSource.getConnection()) {
             PreparedStatement heartsList = conn.prepareStatement(heartIdListSQL);
@@ -92,7 +97,13 @@ public class PostService {
                 commentCountStmt.setInt(1, postId);
                 try (ResultSet rs = commentCountStmt.executeQuery()) {
                     while (rs.next()) {
-                        commentCount = Integer.parseInt(rs.getString("count"));
+                        User currentUser = null;
+                        for (int i = 0; i < users.size(); i++) {
+                            if (users.get(i).getUserId() == rs.getString("userId")) {
+                                currentUser = users.get(i);
+                            }
+                        }
+                        comments.add(new Comment(String.valueOf(postId), rs.getString("commentText"), rs.getString("commentDate"), currentUser));
                     }
                 }
 
@@ -101,7 +112,7 @@ public class PostService {
                 posts.setInt(1, postId);
                 try (ResultSet rs = posts.executeQuery()) {
                     while (rs.next()) {
-                        post = new Post(
+                        post = new ExpandedPost(
                                 rs.getString("postId"), 
                                 rs.getString("content"), 
                                 rs.getString("postDate"), 
@@ -109,7 +120,8 @@ public class PostService {
                                 heartCount, 
                                 commentCount, 
                                 isHearted,
-                                isBookmarked
+                                isBookmarked,
+                                comments
                             );
                     }
                 }

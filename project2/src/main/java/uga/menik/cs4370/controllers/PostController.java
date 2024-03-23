@@ -19,9 +19,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.ModelAndView;
 
 import uga.menik.cs4370.models.ExpandedPost;
-import uga.menik.cs4370.models.Post;
 import uga.menik.cs4370.services.PostService;
-import uga.menik.cs4370.utility.Utility;
 
 /**
  * Handles /post URL and its sub urls.
@@ -52,7 +50,7 @@ public class PostController {
         ModelAndView mv = new ModelAndView("posts_page");
 
         try {
-            Post post = postService.getPostById(Integer.parseInt(postId));
+            ExpandedPost post = postService.getPostById(Integer.parseInt(postId));
             if (post != null) {
                 mv.addObject("posts", post);
             } else {
