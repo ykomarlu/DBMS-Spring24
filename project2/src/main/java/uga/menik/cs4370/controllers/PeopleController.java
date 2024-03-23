@@ -42,9 +42,10 @@ public class PeopleController {
      * through dependency injection and inversion of control.
      */
     @Autowired
-    public PeopleController(UserService userService, PeopleService peopleService) {
+    public PeopleController(UserService userService, PeopleService peopleService, DataSource dataSource) {
         this.userService = userService;
         this.peopleService = peopleService;
+        this.dataSourse = dataSource;
     }
 
     /**
