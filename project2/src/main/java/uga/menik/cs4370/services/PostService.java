@@ -37,7 +37,86 @@ public class PostService {
     public PostService(DataSource dataSource, UserService userService) {
         this.dataSource = dataSource;
         this.userService = userService;
-        this.loggedInUserId = Integer.parseInt(userService.getLoggedInUser().getUserId());
+        this.loggedInUserId = Integer.parseInt(this.userService.getLoggedInUser().getUserId());
+    }
+
+    /**
+    * Gets a post by its ID
+     */
+    public Post getPostById(int postId) {
+        final String heartIdListSQL = "select postId from heart where userId = ? and postId = ?";
+        final String heartCountSQL = "select count(userId) as count from heart where postId = ?";
+
+        final String bookmarkIdListSQL = "select postId from bookmark where userId = ? and postId = ?";
+        final String commentCountSQL = "select count(userId) as count from comment where postId = ?";
+
+        final String postSelectSQL = 
+        "select p.userId as user, u.firstName as firstName, u.lastName as lastName, p.postId as postId, p.postText as content, p.postDate as postDate from post p join user u on p.userId = u.userId where p.postId = ?";
+
+        boolean isHearted = false;
+        boolean isBookmarked = false;
+
+        int heartCount = 0;
+        int commentCount = 0;
+
+        Post post = null;
+
+        try (Connection conn = dataSource.getConnection()) {
+            PreparedStatement heartsList = conn.prepareStatement(heartIdListSQL);
+                heartsList.setInt(1, loggedInUserId);
+                heartsList.setInt(2, postId);
+                try (ResultSet rs = heartsList.executeQuery()) {
+                    while (rs.next()) {
+                        isHearted = true;
+                    }
+                }
+
+            PreparedStatement heartsCount = conn.prepareStatement(heartCountSQL);
+                heartsCount.setInt(1, postId);
+                try (ResultSet rs = heartsCount.executeQuery()) {
+                    while (rs.next()) {
+                        heartCount = Integer.parseInt(rs.getString("count"));
+                    }
+                }
+
+            PreparedStatement bookmarks = conn.prepareStatement(bookmarkIdListSQL);
+                bookmarks.setInt(1, loggedInUserId);
+                bookmarks.setInt(2, postId);
+                try (ResultSet rs = bookmarks.executeQuery()) {
+                    while (rs.next()) {
+                        isBookmarked = true;
+                    }
+                }
+
+            PreparedStatement commentCountStmt = conn.prepareStatement(commentCountSQL);
+                commentCountStmt.setInt(1, postId);
+                try (ResultSet rs = commentCountStmt.executeQuery()) {
+                    while (rs.next()) {
+                        commentCount = Integer.parseInt(rs.getString("count"));
+                    }
+                }
+
+
+            PreparedStatement posts = conn.prepareStatement(postSelectSQL);
+                posts.setInt(1, postId);
+                try (ResultSet rs = posts.executeQuery()) {
+                    while (rs.next()) {
+                        post = new Post(
+                                rs.getString("postId"), 
+                                rs.getString("content"), 
+                                rs.getString("postDate"), 
+                                new User(rs.getString("user"), rs.getString("firstName"), rs.getString("lastName")), 
+                                heartCount, 
+                                commentCount, 
+                                isHearted,
+                                isBookmarked
+                            );
+                    }
+                }
+        } catch (SQLException se) {
+            System.out.println(se.getMessage());
+        }
+        return post;
     }
     
     /**
@@ -51,7 +130,7 @@ public class PostService {
         final String commentCountSQL = "select postId, count(userId) as count from comment group by postId";
 
         final String postSelectSQL = 
-        "select p.userId as user, u.firstName as firstName, u.lastName as lastName, p.postId as postId, p.postText as content, p.postDate as postDate from post p join user u on p.userId = u.userId group by postId;";  
+        "select p.userId as user, u.firstName as firstName, u.lastName as lastName, p.postId as postId, p.postText as content, p.postDate as postDate from post p join user u on p.userId = u.userId";
 
         List<String> heartedIds = new ArrayList<String>();
         List<String> bookmarkedIds = new ArrayList<String>();
@@ -65,69 +144,69 @@ public class PostService {
 
         try (Connection conn = dataSource.getConnection()) {
             PreparedStatement heartsList = conn.prepareStatement(heartIdListSQL);
-            heartsList.setInt(1, loggedInUserId);
-            try (ResultSet rs = heartsList.executeQuery()) {
-                while (rs.next()) {
-                    heartedIds.add(rs.getString("postId"));
+                heartsList.setInt(1, loggedInUserId);
+                try (ResultSet rs = heartsList.executeQuery()) {
+                    while (rs.next()) {
+                        heartedIds.add(rs.getString("postId"));
+                    }
                 }
-            }
 
             PreparedStatement heartsCount = conn.prepareStatement(heartCountSQL);
-            try (ResultSet rs = heartsCount.executeQuery()) {
-                while (rs.next()) {
-                    heartCountList.add(rs.getInt("count"));
-                    heartCountIdList.add(rs.getInt("postId"));
+                try (ResultSet rs = heartsCount.executeQuery()) {
+                    while (rs.next()) {
+                        heartCountList.add(rs.getInt("count"));
+                        heartCountIdList.add(rs.getInt("postId"));
+                    }
                 }
-            }
 
             PreparedStatement bookmarks = conn.prepareStatement(bookmarkIdListSQL);
-            bookmarks.setInt(1, loggedInUserId);
-            try (ResultSet rs = bookmarks.executeQuery()) {
-                while (rs.next()) {
-                    bookmarkedIds.add(rs.getString("postId"));
+                bookmarks.setInt(1, loggedInUserId);
+                try (ResultSet rs = bookmarks.executeQuery()) {
+                    while (rs.next()) {
+                        bookmarkedIds.add(rs.getString("postId"));
+                    }
                 }
-            }
 
             PreparedStatement commentCount = conn.prepareStatement(commentCountSQL);
-            try (ResultSet rs = commentCount.executeQuery()) {
-                while (rs.next()) {
-                    commentCountList.add(rs.getInt("count"));
-                    commentCountIdList.add(rs.getInt("postId"));
+                try (ResultSet rs = commentCount.executeQuery()) {
+                    while (rs.next()) {
+                        commentCountList.add(rs.getInt("count"));
+                        commentCountIdList.add(rs.getInt("postId"));
+                    }
                 }
-            }
 
 
             PreparedStatement posts = conn.prepareStatement(postSelectSQL);
-            try (ResultSet rs = posts.executeQuery()) {
-                while (rs.next()) {
-                    int hearts = 0;
-                    int comments = 0;
+                try (ResultSet rs = posts.executeQuery()) {
+                    while (rs.next()) {
+                        int hearts = 0;
+                        int comments = 0;
 
-                    for (int i = 0; i < heartCountList.size(); i++) {
-                        if (heartCountIdList.get(i) == Integer.parseInt(rs.getString("postId"))) {
-                            hearts = heartCountList.get(i);
+                        for (int i = 0; i < heartCountList.size(); i++) {
+                            if (heartCountIdList.get(i) == Integer.parseInt(rs.getString("postId"))) {
+                                hearts = heartCountList.get(i);
+                            }
                         }
-                    }
 
-                    for (int i = 0; i < commentCountList.size(); i++) {
-                        if (commentCountIdList.get(i) == Integer.parseInt(rs.getString("postId"))) {
-                            comments = commentCountList.get(i);
+                        for (int i = 0; i < commentCountList.size(); i++) {
+                            if (commentCountIdList.get(i) == Integer.parseInt(rs.getString("postId"))) {
+                                comments = commentCountList.get(i);
+                            }
                         }
-                    }
 
-                    postList.add(new Post(
-                            rs.getString("postId"), 
-                            rs.getString("content"), 
-                            rs.getString("postDate"), 
-                            new User(rs.getString("user"), rs.getString("firstName"), rs.getString("lastName")), 
-                            hearts, 
-                            comments, 
-                            heartedIds.contains(rs.getString("postId")),
-                            bookmarkedIds.contains(rs.getString("postId"))
-                        )
-                    );
+                        postList.add(new Post(
+                                rs.getString("postId"), 
+                                rs.getString("content"), 
+                                rs.getString("postDate"), 
+                                new User(rs.getString("user"), rs.getString("firstName"), rs.getString("lastName")), 
+                                hearts, 
+                                comments, 
+                                heartedIds.contains(rs.getString("postId")),
+                                bookmarkedIds.contains(rs.getString("postId"))
+                            )
+                        );
+                    }
                 }
-            }
         } catch (SQLException se) {
             System.out.println(se.getMessage());
         }

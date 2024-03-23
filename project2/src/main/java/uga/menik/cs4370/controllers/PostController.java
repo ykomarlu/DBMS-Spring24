@@ -9,6 +9,7 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -18,6 +19,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.ModelAndView;
 
 import uga.menik.cs4370.models.ExpandedPost;
+import uga.menik.cs4370.models.Post;
+import uga.menik.cs4370.services.PostService;
 import uga.menik.cs4370.utility.Utility;
 
 /**
@@ -26,6 +29,13 @@ import uga.menik.cs4370.utility.Utility;
 @Controller
 @RequestMapping("/post")
 public class PostController {
+
+    private final PostService postService;
+
+    @Autowired
+    public PostController(PostService postService) {
+        this.postService = postService;
+    }
 
     /**
      * This function handles the /post/{postId} URL.
@@ -38,26 +48,20 @@ public class PostController {
      * See notes from HomeController.java regardig error URL parameter.
      */
     @GetMapping("/{postId}")
-    public ModelAndView webpage(@PathVariable("postId") String postId,
-            @RequestParam(name = "error", required = false) String error) {
-        System.out.println("The user is attempting to view post with id: " + postId);
-        // See notes on ModelAndView in BookmarksController.java.
+    public ModelAndView webpage(@PathVariable("postId") String postId, @RequestParam(name = "error", required = false) String error) {
         ModelAndView mv = new ModelAndView("posts_page");
 
-        // Following line populates sample data.
-        // You should replace it with actual data from the database.
-        List<ExpandedPost> posts = Utility.createSampleExpandedPostWithComments();
-        mv.addObject("posts", posts);
-
-        // If an error occured, you can set the following property with the
-        // error message to show the error message to the user.
-        // An error message can be optionally specified with a url query parameter too.
-        String errorMessage = error;
-        mv.addObject("errorMessage", errorMessage);
-
-        // Enable the following line if you want to show no content message.
-        // Do that if your content list is empty.
-        // mv.addObject("isNoContent", true);
+        try {
+            Post post = postService.getPostById(Integer.parseInt(postId));
+            if (post != null) {
+                mv.addObject("posts", post);
+            } else {
+                mv.addObject("isNoContent", true);
+            }
+        } catch (Exception e) {
+            String errorMessage = e.getMessage();
+            mv.addObject("errorMessage", errorMessage);
+        }
 
         return mv;
     }
