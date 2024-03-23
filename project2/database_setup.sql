@@ -88,6 +88,7 @@ values
 (1, "alex_bradshaw", "testpass", "Alex", "Bradshaw"),
 (2, "jon_green", "jgreen", "Jon", "Green"),
 (3, "yush_komarlu", "Inc@ntat3m", "Yushus", "Komarlu");
+
 insert into Post 
 values 
 (1, 1, now(), "First Post by Alex"),

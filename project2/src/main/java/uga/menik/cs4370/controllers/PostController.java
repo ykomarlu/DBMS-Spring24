@@ -5,8 +5,13 @@ This is a project developed by Dr. Menik to give the students an opportunity to 
 */
 package uga.menik.cs4370.controllers;
 
+import java.net.ConnectException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.sql.SQLException;
+import java.util.List;
+
+import javax.sql.DataSource;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -16,9 +21,11 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.ModelAndView;
+import uga.menik.cs4370.models.User;
 
 import uga.menik.cs4370.models.ExpandedPost;
 import uga.menik.cs4370.services.PostService;
+import uga.menik.cs4370.utility.Utility;
 
 /**
  * Handles /post URL and its sub urls.
@@ -98,13 +105,18 @@ public class PostController {
         System.out.println("\tpostId: " + postId);
         System.out.println("\tisAdd: " + isAdd);
 
-        // Redirect the user if the comment adding is a success.
-        // return "redirect:/post/" + postId;
+        try {
+            postService.likePost(Integer.parseInt(postId), isAdd);
+            // Redirect the user if the comment adding is a success.
+            return "redirect:/post/" + postId;
+        }
 
-        // Redirect the user with an error message if there was an error.
-        String message = URLEncoder.encode("Failed to (un)like the post. Please try again.",
-                StandardCharsets.UTF_8);
-        return "redirect:/post/" + postId + "?error=" + message;
+        catch(SQLException s) {
+            // Redirect the user with an error message if there was an error.
+            String message = URLEncoder.encode("Failed to (un)like the post. Please try again.",
+                    StandardCharsets.UTF_8);
+            return "redirect:/post/" + postId + "?error=" + message;
+        }
     }
 
     /**
@@ -121,12 +133,17 @@ public class PostController {
         System.out.println("\tisAdd: " + isAdd);
 
         // Redirect the user if the comment adding is a success.
-        // return "redirect:/post/" + postId;
-
+        try {
+            //Query goes here
+            postService.modifyBookmark(Integer.parseInt(postId), isAdd);
+            return "redirect:/post/" + postId;
+        }
+        catch (SQLException s) {
         // Redirect the user with an error message if there was an error.
-        String message = URLEncoder.encode("Failed to (un)bookmark the post. Please try again.",
-                StandardCharsets.UTF_8);
-        return "redirect:/post/" + postId + "?error=" + message;
+            String message = URLEncoder.encode("Failed to (un)bookmark the post. Please try again.",
+                    StandardCharsets.UTF_8);
+            return "redirect:/post/" + postId + "?error=" + message;
+        }
     }
 
 }
