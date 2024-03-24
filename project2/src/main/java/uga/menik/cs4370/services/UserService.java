@@ -17,6 +17,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.context.annotation.SessionScope;
 
+import jakarta.servlet.http.HttpSession;
 import uga.menik.cs4370.models.User;
 
 /**
@@ -59,8 +60,7 @@ public class UserService {
                 PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
             // Following line replaces the first place holder with username.
-            pstmt.setString(1, username);
-
+            pstmt.setString(1, username);                    
             try (ResultSet rs = pstmt.executeQuery()) {
                 // Traverse the result rows one at a time.
                 // Note: This specific while loop will only run at most once 

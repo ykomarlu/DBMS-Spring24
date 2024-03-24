@@ -18,17 +18,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.context.annotation.SessionScope;
 
-import uga.menik.cs4370.models.Comment;
+import uga.menik.cs4370.models.User;
 import uga.menik.cs4370.models.ExpandedPost;
 import uga.menik.cs4370.models.Post;
-import uga.menik.cs4370.models.User;
+import uga.menik.cs4370.models.Comment;
 
 @Service
 @SessionScope
 public class PostService {
     private final DataSource dataSource;
-    private final UserService userService;
-
+    private final User loggedInUser;
     private int authedUserId;
 
     /**
@@ -38,10 +37,10 @@ public class PostService {
     @Autowired
     public PostService(DataSource dataSource, UserService userService) {
         this.dataSource = dataSource;
-        this.userService = userService;
-        this.authedUserId = Integer.parseInt(this.userService.getLoggedInUser().getUserId());
+        this.loggedInUser = userService.getLoggedInUser();
+        this.authedUserId = Integer.parseInt(userService.getLoggedInUser().getUserId());
     }
-
+    
     /**
     * Gets a post by its ID
      */
@@ -169,7 +168,12 @@ public class PostService {
                 }
 
 
-            PreparedStatement posts = conn.prepareStatement("select p.userId as user, u.firstName as firstName, u.lastName as lastName, p.postId as postId, p.postText as content, p.postDate as postDate from post p join user u on p.userId = u.userId order by postDate");
+            PreparedStatement posts = conn.prepareStatement(
+                    "select p.userId as user, u.firstName as firstName, u.lastName as lastName, p.postId as postId, p.postText as content, p.postDate as postDate\n" +
+                    "from post p \n" +
+                    "join user u \n" +
+                    "on p.userId = u.userId \n" +
+                    "order by postDate desc");
                 try (ResultSet rs = posts.executeQuery()) {
                     while (rs.next()) {
                         int hearts = 0;
@@ -225,8 +229,107 @@ public class PostService {
             return false;
         }
     }
+
+    /**
+     * 
+     * @param postId
+     * @param isAdd
+     * @return
+     * @throws SQLException
+     */
+
+     public boolean modifyBookmark(int postId, boolean isAdd) throws SQLException {
+// inserting new value into the heart table so that logged in user can like a 
+        // post with a specific postId
+        final String alreadyBookmarked = "Select bookmark.postId from bookmark where bookmark.userId = (?)";
+        // Query that deletes a tuple in the heart table that has the specific postId and userId looked for
+        final String removeBookMark = "delete from bookmark where bookmark.postId = (?) and bookmark.userId = (?)";
+        final String newBookMark = "insert into bookmark value (?,?)";
+        // Query that retrieves all the postids that the logged in user has liked
+        
+        try (Connection conn = dataSource.getConnection(); PreparedStatement ps2 = conn.prepareStatement(newBookMark); 
+        PreparedStatement ps = conn.prepareStatement(alreadyBookmarked); PreparedStatement ps3 = conn.prepareStatement(removeBookMark)) {
+
+            ps2.setInt(1, postId);
+            ps2.setInt(2, Integer.parseInt(loggedInUser.getUserId()));
+            ps.setInt(1, Integer.parseInt(loggedInUser.getUserId()));
+            ps3.setInt(1, postId);
+            ps3.setInt(2, Integer.parseInt(loggedInUser.getUserId()));
+
+            ResultSet rs = ps.executeQuery();
+            List<Integer> postIds = new ArrayList<>();
+            
+            while (rs.next()) {
+                postIds.add(rs.getInt("postId"));
+            }
+
+            if (isAdd && !postIds.contains(postId)) {
+                ps2.executeQuery();
+                return true;
+            }
+
+            else if (!isAdd && postIds.contains(postId)) {
+                ps3.executeQuery();
+                return true;
+            }
+
+            else {
+                throw new SQLException();
+            }
+        }
+
+     }
+
+    /**
+     * Allows the logged in user to like posts
+     */
+
+     public boolean likePost (int postId, boolean isAdd) throws SQLException {
+        // inserting new value into the heart table so that logged in user can like a 
+        // post with a specific postId
+        final String alreadyLiked = "Select heart.postId from heart where heart.userId = (?)";
+        // Query that deletes a tuple in the heart table that has the specific postId and userId looked for
+        final String removeLike = "delete from heart where heart.postId = (?) and heart.userId = (?)";
+        final String newLike = "insert into heart value (?,?)";
+        // Query that retrieves all the postids that the logged in user has liked
+        
+        try (Connection conn = dataSource.getConnection(); PreparedStatement ps2 = conn.prepareStatement(newLike); 
+        PreparedStatement ps = conn.prepareStatement(alreadyLiked); PreparedStatement ps3 = conn.prepareStatement(removeLike)) {
+
+            ps2.setInt(1, postId);
+            ps2.setInt(2, Integer.parseInt(loggedInUser.getUserId()));
+            ps.setInt(1, Integer.parseInt(loggedInUser.getUserId()));
+            ps3.setInt(1, postId);
+            ps3.setInt(2, Integer.parseInt(loggedInUser.getUserId()));
+
+            ResultSet rs = ps.executeQuery();
+            List<Integer> postIds = new ArrayList<>();
+            
+            while (rs.next()) {
+                postIds.add(rs.getInt("postId"));
+            }
+
+            if (isAdd && !postIds.contains(postId)) {
+                ps2.executeQuery();
+                return true;
+            }
+
+            else if (!isAdd && postIds.contains(postId)) {
+                ps3.executeQuery();
+                return true;
+            }
+
+            else {
+                throw new SQLException();
+            }
+        }
+
+        // if a post is already liked then the user should not be allowed to relike it
+     }
+
+  
     /*
-    *this is for the profile thing.
+    * this is for the profile thing.
     */
  public List<Post> getPostsByUserIdOrderByDateDesc(String userId) {
         List<Post> posts = new ArrayList<>();
@@ -264,5 +367,4 @@ public class PostService {
         }
         return posts;
     }
-    
 }
