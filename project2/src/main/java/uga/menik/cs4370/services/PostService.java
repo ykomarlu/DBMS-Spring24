@@ -9,6 +9,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -19,6 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.context.annotation.SessionScope;
 
 import uga.menik.cs4370.models.User;
+import uga.menik.cs4370.utility.Utility;
 import uga.menik.cs4370.models.ExpandedPost;
 import uga.menik.cs4370.models.Post;
 import uga.menik.cs4370.models.Comment;
@@ -40,8 +42,6 @@ public class PostService {
         this.loggedInUser = userService.getLoggedInUser();
         this.authedUserId = Integer.parseInt(this.loggedInUser.getUserId());
     }
-
-    // PostService.newComment(Integer.parseInt(postId), comment);
 
     /**
      * Creates a new post
@@ -168,33 +168,190 @@ public class PostService {
     /*
     * this is for the profile thing.
     */
-    public List<Post> getPostsByUserIdOrderByDateDesc(String userId) {
+    public List<Post> getBookmarkedPosts() {
+        List<String> authedUserHeartedIds = new ArrayList<String>();
+        List<String> authedUserBookmarkedIds = new ArrayList<String>();
+        List<Integer> heartCountList = new ArrayList<Integer>();
+        List<Integer> heartCountIdList = new ArrayList<Integer>();
+        List<Integer> commentCountList = new ArrayList<Integer>();
+        List<Integer> commentCountIdList = new ArrayList<Integer>();
+        
         List<Post> posts = new ArrayList<>();
-        String sql = "SELECT p.*, u.firstName, u.lastName " +
+
+        try (Connection conn = dataSource.getConnection()) {
+
+            PreparedStatement heartsList = conn.prepareStatement("select postId from heart where userId = ?");
+            heartsList.setInt(1, authedUserId);
+            try (ResultSet rs = heartsList.executeQuery()) {
+                while (rs.next()) {
+                    authedUserHeartedIds.add(rs.getString("postId"));
+                }
+            }
+
+            PreparedStatement heartsCount = conn.prepareStatement("select postId, count(userId) as count from heart group by postId");
+                try (ResultSet rs = heartsCount.executeQuery()) {
+                    while (rs.next()) {
+                        heartCountList.add(rs.getInt("count"));
+                        heartCountIdList.add(rs.getInt("postId"));
+                    }
+                }
+
+            PreparedStatement bookmarks = conn.prepareStatement("select postId from bookmark where userId = ?");
+                bookmarks.setInt(1, authedUserId);
+                try (ResultSet rs = bookmarks.executeQuery()) {
+                    while (rs.next()) {
+                        authedUserBookmarkedIds.add(rs.getString("postId"));
+                    }
+                }
+
+            PreparedStatement commentCount = conn.prepareStatement("select postId, count(userId) as count from comment group by postId");
+                try (ResultSet rs = commentCount.executeQuery()) {
+                    while (rs.next()) {
+                        commentCountList.add(rs.getInt("count"));
+                        commentCountIdList.add(rs.getInt("postId"));
+                    }
+                }
+
+            PreparedStatement postsByUserId = conn.prepareStatement(
+                    "select p.userId as user, u.firstName as firstName, u.lastName as lastName, p.postId as postId, p.postText as content, p.postDate as postDate\n" +
+                    "from post p\n" +
+                    "join (\n" +
+                        "select postId from bookmark where userId = ?\n" +
+                    ") as b\n" +
+                    "on p.postId = b.postId\n" +
+                    "join user u \n" +
+                    "on p.userId = u.userId\n" +
+                    "order by postDate desc"
+                );
+            postsByUserId.setInt(1, authedUserId);
+            
+            try (ResultSet rs = postsByUserId.executeQuery()) {
+                while (rs.next()) {
+                    int hearts = 0;
+                    int comments = 0;
+
+                    for (int i = 0; i < heartCountList.size(); i++) {
+                        if (heartCountIdList.get(i) == Integer.parseInt(rs.getString("postId"))) {
+                            hearts = heartCountList.get(i);
+                        }
+                    }
+
+                    for (int i = 0; i < commentCountList.size(); i++) {
+                        if (commentCountIdList.get(i) == Integer.parseInt(rs.getString("postId"))) {
+                            comments = commentCountList.get(i);
+                        }
+                    }
+
+                    Post post = new Post(
+                        rs.getString("postId"), 
+                        rs.getString("content"), 
+                        Utility.formatDate(rs.getString("postDate")),
+                        new User(rs.getString("user"), rs.getString("firstName"), rs.getString("lastName")), 
+                        hearts, 
+                        comments, 
+                        authedUserHeartedIds.contains(rs.getString("postId")),
+                        authedUserBookmarkedIds.contains(rs.getString("postId"))
+                    );
+
+                    posts.add(post);
+                }
+            }
+        } catch (SQLException se) {
+            se.printStackTrace();
+        }
+        return posts;
+    }
+
+    /*
+    * this is for the profile thing.
+    */
+    public List<Post> getPostsByUserIdOrderByDateDesc(String userId) {
+        List<String> authedUserHeartedIds = new ArrayList<String>();
+        List<String> authedUserBookmarkedIds = new ArrayList<String>();
+        List<Integer> heartCountList = new ArrayList<Integer>();
+        List<Integer> heartCountIdList = new ArrayList<Integer>();
+        List<Integer> commentCountList = new ArrayList<Integer>();
+        List<Integer> commentCountIdList = new ArrayList<Integer>();
+        
+        List<Post> posts = new ArrayList<>();
+
+        try (Connection conn = dataSource.getConnection()) {
+
+            PreparedStatement heartsList = conn.prepareStatement("select postId from heart where userId = ?");
+            heartsList.setInt(1, authedUserId);
+            try (ResultSet rs = heartsList.executeQuery()) {
+                while (rs.next()) {
+                    authedUserHeartedIds.add(rs.getString("postId"));
+                }
+            }
+
+            PreparedStatement heartsCount = conn.prepareStatement("select postId, count(userId) as count from heart group by postId");
+                try (ResultSet rs = heartsCount.executeQuery()) {
+                    while (rs.next()) {
+                        heartCountList.add(rs.getInt("count"));
+                        heartCountIdList.add(rs.getInt("postId"));
+                    }
+                }
+
+            PreparedStatement bookmarks = conn.prepareStatement("select postId from bookmark where userId = ?");
+                bookmarks.setInt(1, authedUserId);
+                try (ResultSet rs = bookmarks.executeQuery()) {
+                    while (rs.next()) {
+                        authedUserBookmarkedIds.add(rs.getString("postId"));
+                    }
+                }
+
+            PreparedStatement commentCount = conn.prepareStatement("select postId, count(userId) as count from comment group by postId");
+                try (ResultSet rs = commentCount.executeQuery()) {
+                    while (rs.next()) {
+                        commentCountList.add(rs.getInt("count"));
+                        commentCountIdList.add(rs.getInt("postId"));
+                    }
+                }
+
+            PreparedStatement postsByUserId = conn.prepareStatement(
+                    "SELECT p.*, u.firstName, u.lastName " +
                      "FROM post p " +
                      "JOIN user u ON p.userId = u.userId " +
                      "WHERE p.userId = ? " +
-                     "ORDER BY p.postDate DESC";
-        try (Connection conn = dataSource.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setString(1, userId);
-            try (ResultSet rs = pstmt.executeQuery()) {
+                     "ORDER BY p.postDate DESC"
+                );
+            postsByUserId.setString(1, userId);
+            
+            try (ResultSet rs = postsByUserId.executeQuery()) {
                 while (rs.next()) {
+                    int hearts = 0;
+                    int comments = 0;
+
+                    for (int i = 0; i < heartCountList.size(); i++) {
+                        if (heartCountIdList.get(i) == Integer.parseInt(rs.getString("postId"))) {
+                            hearts = heartCountList.get(i);
+                        }
+                    }
+
+                    for (int i = 0; i < commentCountList.size(); i++) {
+                        if (commentCountIdList.get(i) == Integer.parseInt(rs.getString("postId"))) {
+                            comments = commentCountList.get(i);
+                        }
+                    }
+
                     User user = new User(
                         rs.getString("userId"),
                         rs.getString("firstName"),
                         rs.getString("lastName")
                     );
+
                     Post post = new Post(
                         rs.getString("postId"),
                         rs.getString("postText"),
-                        rs.getString("postDate"),
+                        Utility.formatDate(rs.getString("postDate")),
                         user,
-                        0, // Placeholder for heartsCount
-                        0, // Placeholder for commentsCount
-                        false, // Placeholder for isHearted
-                        false // Placeholder for isBookmarked
+                        hearts,
+                        comments, 
+                        authedUserHeartedIds.contains(rs.getString("postId")),
+                        authedUserBookmarkedIds.contains(rs.getString("postId"))
                     );
+
                     posts.add(post);
                 }
             }
@@ -253,7 +410,7 @@ public class PostService {
                     }
                 }
 
-            PreparedStatement commentCountStmt = conn.prepareStatement("select * from comment where postId = ?");
+            PreparedStatement commentCountStmt = conn.prepareStatement("select * from comment where postId = ? order by commentDate desc");
                 commentCountStmt.setInt(1, postId);
                 try (ResultSet rs = commentCountStmt.executeQuery()) {
                     while (rs.next()) {
@@ -263,20 +420,27 @@ public class PostService {
                                 currentUser = users.get(i);
                             }
                         }
-                        comments.add(new Comment(String.valueOf(postId), rs.getString("commentText"), rs.getString("commentDate"), currentUser));
+                        comments.add(new Comment(String.valueOf(postId), rs.getString("commentText"), Utility.formatDate(rs.getString("commentDate")), currentUser));
                     }
                     commentCount = comments.size();
                 }
 
 
-            PreparedStatement posts = conn.prepareStatement("select p.userId as user, u.firstName as firstName, u.lastName as lastName, p.postId as postId, p.postText as content, p.postDate as postDate from post p join user u on p.userId = u.userId where p.postId = ?");
+            PreparedStatement posts = conn.prepareStatement(
+                        "select p.userId as user, u.firstName as firstName, u.lastName as lastName, \n" +
+                        "p.postId as postId, p.postText as content, p.postDate as postDate \n" +
+                        "from post p \n" +
+                        "join user u \n" +
+                        "on p.userId = u.userId \n" +
+                        "where p.postId = ?"
+                    );
                 posts.setInt(1, postId);
                 try (ResultSet rs = posts.executeQuery()) {
                     if (rs.next()) {
                         post = new ExpandedPost(
                                 rs.getString("postId"), 
                                 rs.getString("content"), 
-                                rs.getString("postDate"), 
+                                Utility.formatDate(rs.getString("postDate")), 
                                 new User(rs.getString("user"), rs.getString("firstName"), rs.getString("lastName")), 
                                 heartCount, 
                                 commentCount, 
@@ -290,9 +454,8 @@ public class PostService {
             System.out.println(se.getMessage());
         }
         return post;
-    }
-    
-    /**
+    }   
+     /**
     * Gets all available posts
      */
     public List<Post> getAllPosts() {
@@ -344,8 +507,7 @@ public class PostService {
                     "from post p \n" +
                     "join user u \n" +
                     "on p.userId = u.userId \n" +
-                    "order by postDate desc"
-                    );
+                    "order by postDate desc");
                 try (ResultSet rs = posts.executeQuery()) {
                     while (rs.next()) {
                         int hearts = 0;
@@ -367,6 +529,98 @@ public class PostService {
                                 rs.getString("postId"), 
                                 rs.getString("content"), 
                                 rs.getString("postDate"), 
+                                new User(rs.getString("user"), rs.getString("firstName"), rs.getString("lastName")), 
+                                hearts, 
+                                comments, 
+                                authedUserHeartedIds.contains(rs.getString("postId")),
+                                authedUserBookmarkedIds.contains(rs.getString("postId"))
+                            )
+                        );
+                    }
+                }
+        } catch (SQLException se) {
+            System.out.println(se.getMessage());
+        }
+
+        return postList;
+    }
+    /**
+    * Gets all available posts from followers
+    */
+    public List<Post> getAllPostsOfFollowing() {
+        List<String> authedUserHeartedIds = new ArrayList<String>();
+        List<String> authedUserBookmarkedIds = new ArrayList<String>();
+        List<Integer> heartCountList = new ArrayList<Integer>();
+        List<Integer> heartCountIdList = new ArrayList<Integer>();
+        List<Integer> commentCountList = new ArrayList<Integer>();
+        List<Integer> commentCountIdList = new ArrayList<Integer>();
+
+        List<Post> postList = new ArrayList<Post>();
+
+        try (Connection conn = dataSource.getConnection()) {
+            PreparedStatement heartsList = conn.prepareStatement("select postId from heart where userId = ?");
+                heartsList.setInt(1, authedUserId);
+                try (ResultSet rs = heartsList.executeQuery()) {
+                    while (rs.next()) {
+                        authedUserHeartedIds.add(rs.getString("postId"));
+                    }
+                }
+
+            PreparedStatement heartsCount = conn.prepareStatement("select postId, count(userId) as count from heart group by postId");
+                try (ResultSet rs = heartsCount.executeQuery()) {
+                    while (rs.next()) {
+                        heartCountList.add(rs.getInt("count"));
+                        heartCountIdList.add(rs.getInt("postId"));
+                    }
+                }
+
+            PreparedStatement bookmarks = conn.prepareStatement("select postId from bookmark where userId = ?");
+                bookmarks.setInt(1, authedUserId);
+                try (ResultSet rs = bookmarks.executeQuery()) {
+                    while (rs.next()) {
+                        authedUserBookmarkedIds.add(rs.getString("postId"));
+                    }
+                }
+
+            PreparedStatement commentCount = conn.prepareStatement("select postId, count(userId) as count from comment group by postId");
+                try (ResultSet rs = commentCount.executeQuery()) {
+                    while (rs.next()) {
+                        commentCountList.add(rs.getInt("count"));
+                        commentCountIdList.add(rs.getInt("postId"));
+                    }
+                }
+
+
+            PreparedStatement posts = conn.prepareStatement(
+                    "select p.userId as user, u.firstName as firstName, u.lastName as lastName, p.postId as postId, p.postText as content, p.postDate as postDate\n" +
+                    "from post p \n" +
+                    "join user u \n" +
+                    "on p.userId = u.userId \n" +
+                    "where u.userId in (select followeeUserId from follow where followerUserId = ?) \n" +
+                    "order by postDate desc"
+                    );
+                    posts.setInt(1, authedUserId);
+                try (ResultSet rs = posts.executeQuery()) {
+                    while (rs.next()) {
+                        int hearts = 0;
+                        int comments = 0;
+
+                        for (int i = 0; i < heartCountList.size(); i++) {
+                            if (heartCountIdList.get(i) == Integer.parseInt(rs.getString("postId"))) {
+                                hearts = heartCountList.get(i);
+                            }
+                        }
+
+                        for (int i = 0; i < commentCountList.size(); i++) {
+                            if (commentCountIdList.get(i) == Integer.parseInt(rs.getString("postId"))) {
+                                comments = commentCountList.get(i);
+                            }
+                        }
+
+                        postList.add(new Post(
+                                rs.getString("postId"), 
+                                rs.getString("content"), 
+                                Utility.formatDate(rs.getString("postDate")), 
                                 new User(rs.getString("user"), rs.getString("firstName"), rs.getString("lastName")), 
                                 hearts, 
                                 comments, 

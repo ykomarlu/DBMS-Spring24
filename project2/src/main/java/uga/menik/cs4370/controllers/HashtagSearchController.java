@@ -5,7 +5,14 @@ This is a project developed by Dr. Menik to give the students an opportunity to 
 */
 package uga.menik.cs4370.controllers;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.sql.ResultSet;
+import javax.sql.DataSource;
+import java.util.ArrayList;
 import java.util.List;
+
 
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -14,6 +21,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.ModelAndView;
 
 import uga.menik.cs4370.models.Post;
+import uga.menik.cs4370.services.PostService;
 import uga.menik.cs4370.utility.Utility;
 
 /**
@@ -23,7 +31,13 @@ import uga.menik.cs4370.utility.Utility;
 @Controller
 @RequestMapping("/hashtagsearch")
 public class HashtagSearchController {
-
+    DataSource dataSource;
+    PostService postService;
+    public HashtagSearchController(DataSource dataSource, PostService postService){
+        this.dataSource = dataSource;
+        this.postService = postService;
+    }
+    
     /**
      * This function handles the /hashtagsearch URL itself.
      * This URL can process a request parameter with name hashtags.
@@ -32,16 +46,42 @@ public class HashtagSearchController {
      * Note: the value of the hashtags is URL encoded.
      */
     @GetMapping
-    public ModelAndView webpage(@RequestParam(name = "hashtags") String hashtags) {
+    public ModelAndView webpage(@RequestParam(name = "hashtags") String hashtags) throws SQLException{
         System.out.println("User is searching: " + hashtags);
 
+        ArrayList<String> hashtagWords = new ArrayList<>();
+        String[] words = hashtags.split("\\s+");
+        for (String word : words) {
+            hashtagWords.add(word.substring(1));
+        }
+        String sql = "select postId from hashtag where hashtag in('" + hashtagWords.get(0)+"'";
+        for (int i = 1; i < hashtagWords.size(); i++) {
+            sql += ", '"+hashtagWords.get(i)+"'";
+        }
+        sql += ") group by postId having count(distinct hashtag) = " + hashtagWords.size();
+        
+        try(Connection conn = dataSource.getConnection()) {
+            PreparedStatement pstmt = conn.prepareStatement(sql);
+            ResultSet rs = pstmt.executeQuery();
+            ArrayList<Integer> postWithHashtag = new ArrayList<>();
+            while (rs.next()) {
+                postWithHashtag.add(rs.getInt("postId"));
+            }
         // See notes on ModelAndView in BookmarksController.java.
         ModelAndView mv = new ModelAndView("posts_page");
 
         // Following line populates sample data.
         // You should replace it with actual data from the database.
-        List<Post> posts = Utility.createSamplePostsListWithoutComments();
-        mv.addObject("posts", posts);
+        List<Post> allPosts = postService.getAllPosts();
+        List<Post> hashPost = new ArrayList<Post>();
+        for (Post post : allPosts) {
+            
+            if(postWithHashtag.contains(Integer.parseInt(post.getPostId()))){
+                
+                hashPost.add(post);
+            }
+        }
+        mv.addObject("posts", hashPost);
 
         // If an error occured, you can set the following property with the
         // error message to show the error message to the user.
@@ -55,4 +95,5 @@ public class HashtagSearchController {
         return mv;
     }
     
+}
 }
