@@ -168,7 +168,12 @@ public class PostService {
                 }
 
 
-            PreparedStatement posts = conn.prepareStatement("select p.userId as user, u.firstName as firstName, u.lastName as lastName, p.postId as postId, p.postText as content, p.postDate as postDate from post p join user u on p.userId = u.userId order by postDate");
+            PreparedStatement posts = conn.prepareStatement(
+                    "select p.userId as user, u.firstName as firstName, u.lastName as lastName, p.postId as postId, p.postText as content, p.postDate as postDate\n" +
+                    "from post p \n" +
+                    "join user u \n" +
+                    "on p.userId = u.userId \n" +
+                    "order by postDate desc");
                 try (ResultSet rs = posts.executeQuery()) {
                     while (rs.next()) {
                         int hearts = 0;

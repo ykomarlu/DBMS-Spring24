@@ -42,7 +42,6 @@ public class PeopleService {
      */
     public List<FollowableUser> getFollowableUsers(String userIdToExclude) {
         List<Integer> followList = new ArrayList<Integer>();
-        List<String> activeDate = new ArrayList<String>();
         List<FollowableUser> userList = new ArrayList<FollowableUser>();
 
         try (Connection conn = dataSource.getConnection()) {
@@ -55,29 +54,26 @@ public class PeopleService {
                         followList.add(rs.getInt("id"));
                     }
                 }
-
-                PreparedStatement active = conn.prepareStatement("select followeeUserId as id from follow where followerUserId = ?");
-
-                active.setString(1, userIdToExclude);
-
-                try (ResultSet rs = active.executeQuery()) {
-                    while (rs.next()) {
-                        activeDate.add(rs.getString("active"));
-                    }
-                }
                 
-            PreparedStatement excludedUser = conn.prepareStatement("SELECT * FROM User LEFT JOIN Post ON User.userId = Post.userId where User.userId != ?");
+            PreparedStatement excludedUser = conn.prepareStatement(
+                    "SELECT * FROM User\n" + 
+                    "LEFT JOIN ( \n" + 
+                        "select post.userId, post.postText, post.postDate FROM post\n" + 
+                            "join (\n" + 
+                            "SELECT max(postDate) AS postDate, userId FROM post\n" + 
+                            "GROUP BY userId\n" + 
+                            "ORDER BY postDate desc\n" + 
+                            ") AS sub\n" + 
+                        "ON post.postDate = sub.postDate AND post.userId = sub.userId\n" + 
+                        "group by userId\n" + 
+                    ") AS Post\n" + 
+                    "ON User.userId = Post.userId\n" + 
+                    "having User.userId != ?");
                 excludedUser.setString(1, userIdToExclude);
-                int iterable = 0;
-
                 try (ResultSet rs = excludedUser.executeQuery()) {
                     while (rs.next()) {
-                        String activeStatus = "Never";
-                        if (activeDate.size() - 1 > iterable) {
-                            activeStatus = activeDate.get(iterable);
-                        }
-                        userList.add(new FollowableUser(rs.getString("userId"), rs.getString("firstName"), rs.getString("lastName"), !followList.contains(rs.getInt("userId")), activeStatus));
-                        iterable++;
+                        String activeStatus = rs.getString("postDate") != null ? rs.getString("postDate") : "Never";
+                        userList.add(new FollowableUser(rs.getString("userId"), rs.getString("firstName"), rs.getString("lastName"), followList.contains(rs.getInt("userId")), activeStatus));
                     }
                 }
         } catch (SQLException se) {
