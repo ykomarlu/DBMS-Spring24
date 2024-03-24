@@ -18,6 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import uga.menik.cs4370.models.FollowableUser;
+import uga.menik.cs4370.utility.Utility;
 
 /**
  * This service contains people related functions.
@@ -73,8 +74,19 @@ public class PeopleService {
                 excludedUser.setString(1, userIdToExclude);
                 try (ResultSet rs = excludedUser.executeQuery()) {
                     while (rs.next()) {
-                        String activeStatus = rs.getString("postDate") != null ? rs.getString("postDate") : "Never";
-                        userList.add(new FollowableUser(rs.getString("userId"), rs.getString("firstName"), rs.getString("lastName"), followList.contains(rs.getInt("userId")), activeStatus));
+                        String activeStatus = "Never";
+                        if (rs.getString("postDate") != null) {
+                            activeStatus = Utility.formatDate(rs.getString("postDate"));
+                        }
+                        userList.add(
+                            new FollowableUser(
+                                rs.getString("userId"), 
+                                rs.getString("firstName"), 
+                                rs.getString("lastName"), 
+                                followList.contains(rs.getInt("userId")), 
+                                activeStatus
+                            )
+                        );
                     }
                 }
         } catch (SQLException se) {

@@ -1,5 +1,7 @@
 package uga.menik.cs4370.utility;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -10,6 +12,11 @@ import uga.menik.cs4370.models.Post;
 import uga.menik.cs4370.models.User;
 
 public class Utility {
+
+    public static String formatDate(String dateTimeString) {
+        LocalDateTime dateTime = LocalDateTime.parse(dateTimeString, DateTimeFormatter.ofPattern("uuuu-MM-dd HH:mm:ss"));
+        return dateTime.format(DateTimeFormatter.ofPattern("LLL dd, YYYY, hh:mm a"));
+    }
 
     public static List<FollowableUser> createSampleFollowableUserList() {
         List<FollowableUser> followableUsers = new ArrayList<>();

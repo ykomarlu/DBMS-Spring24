@@ -20,6 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.context.annotation.SessionScope;
 
 import uga.menik.cs4370.models.User;
+import uga.menik.cs4370.utility.Utility;
 import uga.menik.cs4370.models.ExpandedPost;
 import uga.menik.cs4370.models.Post;
 import uga.menik.cs4370.models.Comment;
@@ -244,7 +245,7 @@ public class PostService {
                     Post post = new Post(
                         rs.getString("postId"), 
                         rs.getString("content"), 
-                        rs.getString("postDate"), 
+                        Utility.formatDate(rs.getString("postDate")),
                         new User(rs.getString("user"), rs.getString("firstName"), rs.getString("lastName")), 
                         hearts, 
                         comments, 
@@ -343,7 +344,7 @@ public class PostService {
                     Post post = new Post(
                         rs.getString("postId"),
                         rs.getString("postText"),
-                        rs.getString("postDate"),
+                        Utility.formatDate(rs.getString("postDate")),
                         user,
                         hearts,
                         comments, 
@@ -419,7 +420,7 @@ public class PostService {
                                 currentUser = users.get(i);
                             }
                         }
-                        comments.add(new Comment(String.valueOf(postId), rs.getString("commentText"), rs.getString("commentDate"), currentUser));
+                        comments.add(new Comment(String.valueOf(postId), rs.getString("commentText"), Utility.formatDate(rs.getString("commentDate")), currentUser));
                     }
                     commentCount = comments.size();
                 }
@@ -439,7 +440,7 @@ public class PostService {
                         post = new ExpandedPost(
                                 rs.getString("postId"), 
                                 rs.getString("content"), 
-                                rs.getString("postDate"), 
+                                Utility.formatDate(rs.getString("postDate")), 
                                 new User(rs.getString("user"), rs.getString("firstName"), rs.getString("lastName")), 
                                 heartCount, 
                                 commentCount, 
@@ -531,7 +532,7 @@ public class PostService {
                         postList.add(new Post(
                                 rs.getString("postId"), 
                                 rs.getString("content"), 
-                                rs.getString("postDate"), 
+                                Utility.formatDate(rs.getString("postDate")), 
                                 new User(rs.getString("user"), rs.getString("firstName"), rs.getString("lastName")), 
                                 hearts, 
                                 comments, 
