@@ -47,7 +47,7 @@ public class HomeController {
         ModelAndView mv = new ModelAndView("home_page");
 
         try {
-            List<Post> posts = postService.getAllPosts();
+            List<Post> posts = postService.getAllPostsOfFollowing();
             
             if (posts.size() == 0) {
                 mv.addObject("isNoContent", true);
