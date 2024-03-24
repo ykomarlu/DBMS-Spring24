@@ -5,13 +5,9 @@ This is a project developed by Dr. Menik to give the students an opportunity to 
 */
 package uga.menik.cs4370.controllers;
 
-import java.net.ConnectException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
-import java.util.List;
-
-import javax.sql.DataSource;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -21,11 +17,9 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.ModelAndView;
-import uga.menik.cs4370.models.User;
 
 import uga.menik.cs4370.models.ExpandedPost;
 import uga.menik.cs4370.services.PostService;
-import uga.menik.cs4370.utility.Utility;
 
 /**
  * Handles /post URL and its sub urls.
@@ -77,19 +71,16 @@ public class PostController {
      * See comments in HomeController.java regarding form submissions.
      */
     @PostMapping("/{postId}/comment")
-    public String postComment(@PathVariable("postId") String postId,
-            @RequestParam(name = "comment") String comment) {
-        System.out.println("The user is attempting add a comment:");
-        System.out.println("\tpostId: " + postId);
-        System.out.println("\tcomment: " + comment);
+    public String postComment(@PathVariable("postId") String postId, @RequestParam(name = "comment") String comment) {
 
-        // Redirect the user if the comment adding is a success.
-        // return "redirect:/post/" + postId;
+        try {
+            postService.newComment(Integer.parseInt(postId), comment);
 
-        // Redirect the user with an error message if there was an error.
-        String message = URLEncoder.encode("Failed to post the comment. Please try again.",
-                StandardCharsets.UTF_8);
-        return "redirect:/post/" + postId + "?error=" + message;
+            return "redirect:/post/" + postId;
+        } catch (Exception e) {
+            String message = URLEncoder.encode("Failed to post the comment. Please try again.", StandardCharsets.UTF_8);
+            return "redirect:/post/" + postId + "?error=" + message;
+        }
     }
 
     /**
@@ -99,20 +90,12 @@ public class PostController {
      * get type form submissions and how path variables work.
      */
     @GetMapping("/{postId}/heart/{isAdd}")
-    public String addOrRemoveHeart(@PathVariable("postId") String postId,
-            @PathVariable("isAdd") Boolean isAdd) {
-        System.out.println("The user is attempting add or remove a heart:");
-        System.out.println("\tpostId: " + postId);
-        System.out.println("\tisAdd: " + isAdd);
-
+    public String addOrRemoveHeart(@PathVariable("postId") String postId, @PathVariable("isAdd") Boolean isAdd) {
         try {
             postService.likePost(Integer.parseInt(postId), isAdd);
-            // Redirect the user if the comment adding is a success.
             return "redirect:/post/" + postId;
         }
-
         catch(SQLException s) {
-            // Redirect the user with an error message if there was an error.
             String message = URLEncoder.encode("Failed to (un)like the post. Please try again.",
                     StandardCharsets.UTF_8);
             return "redirect:/post/" + postId + "?error=" + message;
@@ -126,20 +109,12 @@ public class PostController {
      * get type form submissions.
      */
     @GetMapping("/{postId}/bookmark/{isAdd}")
-    public String addOrRemoveBookmark(@PathVariable("postId") String postId,
-            @PathVariable("isAdd") Boolean isAdd) {
-        System.out.println("The user is attempting add or remove a bookmark:");
-        System.out.println("\tpostId: " + postId);
-        System.out.println("\tisAdd: " + isAdd);
-
-        // Redirect the user if the comment adding is a success.
+    public String addOrRemoveBookmark(@PathVariable("postId") String postId, @PathVariable("isAdd") Boolean isAdd) {
         try {
-            //Query goes here
             postService.modifyBookmark(Integer.parseInt(postId), isAdd);
             return "redirect:/post/" + postId;
         }
         catch (SQLException s) {
-        // Redirect the user with an error message if there was an error.
             String message = URLEncoder.encode("Failed to (un)bookmark the post. Please try again.",
                     StandardCharsets.UTF_8);
             return "redirect:/post/" + postId + "?error=" + message;
