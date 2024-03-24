@@ -58,7 +58,7 @@ public class PeopleService {
             PreparedStatement excludedUser = conn.prepareStatement(
                     "SELECT * FROM User\n" + 
                     "LEFT JOIN ( \n" + 
-                        "select post.userId, post.postText, post.postDate FROM post\n" + 
+                        "select post.userId, post.postDate FROM post\n" + 
                             "join (\n" + 
                             "SELECT max(postDate) AS postDate, userId FROM post\n" + 
                             "GROUP BY userId\n" + 
