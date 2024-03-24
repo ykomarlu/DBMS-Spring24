@@ -66,7 +66,7 @@ CREATE TABLE Comment (
     commentId int not null auto_increment, 
     postId int not null, 
     userId int not null,
-    commentDate date not null,
+    commentDate date not null DEFAULT NOW(),
     commentText varchar(225) not null,
     primary key(commentId),
     foreign key (postId) References Post(postId),
