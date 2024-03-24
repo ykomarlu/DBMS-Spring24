@@ -67,16 +67,37 @@ public class PostService {
      * Returns true if new post is successful.
      */
     public boolean newPost(String content) throws SQLException {
-        try (Connection conn = dataSource.getConnection()) {
-            PreparedStatement postStatement = 
-            conn.prepareStatement("insert into post (postText, userId) values (?, ?)");
+        
+        //inserting into post
+        final String newPost = "insert into post (postText, userId) values (?, ?)";
 
+        try (Connection conn = dataSource.getConnection(); PreparedStatement postStatement = conn.prepareStatement(newPost, Statement.RETURN_GENERATED_KEYS)) {
             postStatement.setString(1, content);
             postStatement.setInt(2, authedUserId);
-
+            
             int rowsAffected = postStatement.executeUpdate();
+            ResultSet rs = postStatement.getGeneratedKeys();
+            rs.next();
+            String postId = rs.getInt(1)+"";
+            //inserting into hashtag
+        ArrayList<String> wordsWithHashtags = new ArrayList<>();
+        String words[] = content.split("\\s+");
+        for (int i = 0; i < words.length; i++) {
+            if (words[i].startsWith("#")) {
+                String hashtag = words[i].substring(1);
+                wordsWithHashtags.add(hashtag);
+            }
+        }
+        String hashInsert = "insert into hashtag values (?,?)";
+          try (Connection conn2 = dataSource.getConnection(); PreparedStatement postStatement2 = conn.prepareStatement(hashInsert)){
+            for (String hashtag : wordsWithHashtags){
+                postStatement2.setString(1, hashtag);
+                postStatement2.setString(2, postId);
+                postStatement2.executeUpdate();
+            }
+          }
             return rowsAffected > 0;
-        } catch (SQLException e) {
+        } catch (Exception e) {
             System.out.println(e.getMessage());
             return false;
         }
