@@ -410,7 +410,7 @@ public class PostService {
                     }
                 }
 
-            PreparedStatement commentCountStmt = conn.prepareStatement("select * from comment where postId = ? order by commentDate desc");
+            PreparedStatement commentCountStmt = conn.prepareStatement("select * from comment where postId = ? order by commentDate asc");
                 commentCountStmt.setInt(1, postId);
                 try (ResultSet rs = commentCountStmt.executeQuery()) {
                     while (rs.next()) {
