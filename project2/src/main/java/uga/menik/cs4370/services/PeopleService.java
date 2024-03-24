@@ -68,7 +68,8 @@ public class PeopleService {
                         "group by userId\n" + 
                     ") AS Post\n" + 
                     "ON User.userId = Post.userId\n" + 
-                    "having User.userId != ?");
+                    "having User.userId != ?"
+                    );
                 excludedUser.setString(1, userIdToExclude);
                 try (ResultSet rs = excludedUser.executeQuery()) {
                     while (rs.next()) {

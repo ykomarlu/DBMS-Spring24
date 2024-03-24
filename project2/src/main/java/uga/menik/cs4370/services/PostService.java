@@ -38,7 +38,149 @@ public class PostService {
     public PostService(DataSource dataSource, UserService userService) {
         this.dataSource = dataSource;
         this.loggedInUser = userService.getLoggedInUser();
-        this.authedUserId = Integer.parseInt(userService.getLoggedInUser().getUserId());
+        this.authedUserId = Integer.parseInt(this.loggedInUser.getUserId());
+    }
+
+    // PostService.newComment(Integer.parseInt(postId), comment);
+
+    /**
+     * Creates a new post
+     * Returns true if new post is successful.
+     */
+    public boolean newComment(int postId, String content) throws SQLException {
+        try (Connection conn = dataSource.getConnection()) {
+            PreparedStatement commentStatement = 
+            conn.prepareStatement("insert into comment (commentText, postId, userId) values (?, ?, ?)");
+
+            commentStatement.setString(1, content);
+            commentStatement.setInt(2, postId);
+            commentStatement.setInt(3, authedUserId);
+
+            int rowsAffected = commentStatement.executeUpdate();
+            return rowsAffected > 0;
+        } catch (SQLException se) {
+            System.out.println(se.getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Creates a new post
+     * Returns true if new post is successful.
+     */
+    public boolean newPost(String content) throws SQLException {
+        try (Connection conn = dataSource.getConnection()) {
+            PreparedStatement postStatement = 
+            conn.prepareStatement("insert into post (postText, userId) values (?, ?)");
+
+            postStatement.setString(1, content);
+            postStatement.setInt(2, authedUserId);
+
+            int rowsAffected = postStatement.executeUpdate();
+            return rowsAffected > 0;
+        } catch (SQLException e) {
+            System.out.println(e.getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * 
+     * @param postId
+     * @param isAdd
+     * @return
+     * @throws SQLException
+     */
+
+     public boolean modifyBookmark(int postId, boolean isAdd) throws SQLException {
+        try (Connection conn = dataSource.getConnection()) {
+            if (isAdd) {
+                PreparedStatement insert = conn.prepareStatement("INSERT INTO bookmark VALUE (?,?)");
+
+                insert.setInt(1, postId);
+                insert.setInt(2, authedUserId);
+
+                insert.executeUpdate();
+            } else {
+                PreparedStatement delete = conn.prepareStatement("DELETE FROM bookmark WHERE postId = ? AND userId = ?");
+
+                delete.setInt(1, postId);
+                delete.setInt(2, authedUserId);
+
+                delete.executeUpdate();
+            }
+            return true;
+        } catch (SQLException se) {
+            System.out.println(se.getMessage());
+            return false;
+        }
+     }
+
+    /**
+    * Allows the logged in user to like posts
+    */
+     public boolean likePost (int postId, boolean isAdd) throws SQLException {
+        try (Connection conn = dataSource.getConnection()) {
+            if (isAdd) {
+                PreparedStatement addLike = conn.prepareStatement("INSERT INTO heart VALUE (?,?)"); 
+
+                addLike.setInt(1, postId);
+                addLike.setInt(2, authedUserId);
+
+                addLike.executeUpdate();
+            } else {
+                PreparedStatement removeLike = conn.prepareStatement("DELETE FROM heart WHERE postId = ? AND userId = ?");
+
+                removeLike.setInt(1, postId);
+                removeLike.setInt(2, authedUserId);
+
+                removeLike.executeUpdate();
+            }
+
+            return true;
+        } catch (SQLException se) {
+            System.out.println(se.getMessage());
+            return false;
+        }
+     }
+
+    /*
+    * this is for the profile thing.
+    */
+    public List<Post> getPostsByUserIdOrderByDateDesc(String userId) {
+        List<Post> posts = new ArrayList<>();
+        String sql = "SELECT p.*, u.firstName, u.lastName " +
+                     "FROM post p " +
+                     "JOIN user u ON p.userId = u.userId " +
+                     "WHERE p.userId = ? " +
+                     "ORDER BY p.postDate DESC";
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, userId);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    User user = new User(
+                        rs.getString("userId"),
+                        rs.getString("firstName"),
+                        rs.getString("lastName")
+                    );
+                    Post post = new Post(
+                        rs.getString("postId"),
+                        rs.getString("postText"),
+                        rs.getString("postDate"),
+                        user,
+                        0, // Placeholder for heartsCount
+                        0, // Placeholder for commentsCount
+                        false, // Placeholder for isHearted
+                        false // Placeholder for isBookmarked
+                    );
+                    posts.add(post);
+                }
+            }
+        } catch (SQLException se) {
+            se.printStackTrace();
+        }
+        return posts;
     }
     
     /**
@@ -57,6 +199,13 @@ public class PostService {
         ExpandedPost post = null;
 
         try (Connection conn = dataSource.getConnection()) {
+            PreparedStatement usersList = conn.prepareStatement("select * from user");
+                try (ResultSet rs = usersList.executeQuery()) {
+                    while (rs.next()) {
+                        users.add(new User(String.valueOf(rs.getInt("userId")), rs.getString("firstName"), rs.getString("lastName")));
+                    }
+                }
+
             PreparedStatement heartsList = conn.prepareStatement("select postId from heart where userId = ? and postId = ?");
                 heartsList.setInt(1, authedUserId);
                 heartsList.setInt(2, postId);
@@ -89,12 +238,13 @@ public class PostService {
                     while (rs.next()) {
                         User currentUser = null;
                         for (int i = 0; i < users.size(); i++) {
-                            if (users.get(i).getUserId() == rs.getString("userId")) {
+                            if (users.get(i).getUserId().equals(rs.getString("userId"))) {
                                 currentUser = users.get(i);
                             }
                         }
                         comments.add(new Comment(String.valueOf(postId), rs.getString("commentText"), rs.getString("commentDate"), currentUser));
                     }
+                    commentCount = comments.size();
                 }
 
 
@@ -173,7 +323,8 @@ public class PostService {
                     "from post p \n" +
                     "join user u \n" +
                     "on p.userId = u.userId \n" +
-                    "order by postDate desc");
+                    "order by postDate desc"
+                    );
                 try (ResultSet rs = posts.executeQuery()) {
                     while (rs.next()) {
                         int hearts = 0;
@@ -209,162 +360,5 @@ public class PostService {
         }
 
         return postList;
-    }
-
-    /**
-     * Creates a new post
-     * Returns true if new post is successful.
-     */
-    public boolean newPost(String content) throws SQLException {
-        final String newPost = "insert into post (postText, userId) values (?, ?)";
-
-        try (Connection conn = dataSource.getConnection(); PreparedStatement postStatement = conn.prepareStatement(newPost)) {
-            postStatement.setString(1, content);
-            postStatement.setInt(2, authedUserId);
-
-            int rowsAffected = postStatement.executeUpdate();
-            return rowsAffected > 0;
-        } catch (Exception e) {
-            System.out.println(e.getMessage());
-            return false;
-        }
-    }
-
-    /**
-     * 
-     * @param postId
-     * @param isAdd
-     * @return
-     * @throws SQLException
-     */
-
-     public boolean modifyBookmark(int postId, boolean isAdd) throws SQLException {
-// inserting new value into the heart table so that logged in user can like a 
-        // post with a specific postId
-        final String alreadyBookmarked = "Select bookmark.postId from bookmark where bookmark.userId = (?)";
-        // Query that deletes a tuple in the heart table that has the specific postId and userId looked for
-        final String removeBookMark = "delete from bookmark where bookmark.postId = (?) and bookmark.userId = (?)";
-        final String newBookMark = "insert into bookmark value (?,?)";
-        // Query that retrieves all the postids that the logged in user has liked
-        
-        try (Connection conn = dataSource.getConnection(); PreparedStatement ps2 = conn.prepareStatement(newBookMark); 
-        PreparedStatement ps = conn.prepareStatement(alreadyBookmarked); PreparedStatement ps3 = conn.prepareStatement(removeBookMark)) {
-
-            ps2.setInt(1, postId);
-            ps2.setInt(2, Integer.parseInt(loggedInUser.getUserId()));
-            ps.setInt(1, Integer.parseInt(loggedInUser.getUserId()));
-            ps3.setInt(1, postId);
-            ps3.setInt(2, Integer.parseInt(loggedInUser.getUserId()));
-
-            ResultSet rs = ps.executeQuery();
-            List<Integer> postIds = new ArrayList<>();
-            
-            while (rs.next()) {
-                postIds.add(rs.getInt("postId"));
-            }
-
-            if (isAdd && !postIds.contains(postId)) {
-                ps2.executeQuery();
-                return true;
-            }
-
-            else if (!isAdd && postIds.contains(postId)) {
-                ps3.executeQuery();
-                return true;
-            }
-
-            else {
-                throw new SQLException();
-            }
-        }
-
-     }
-
-    /**
-     * Allows the logged in user to like posts
-     */
-
-     public boolean likePost (int postId, boolean isAdd) throws SQLException {
-        // inserting new value into the heart table so that logged in user can like a 
-        // post with a specific postId
-        final String alreadyLiked = "Select heart.postId from heart where heart.userId = (?)";
-        // Query that deletes a tuple in the heart table that has the specific postId and userId looked for
-        final String removeLike = "delete from heart where heart.postId = (?) and heart.userId = (?)";
-        final String newLike = "insert into heart value (?,?)";
-        // Query that retrieves all the postids that the logged in user has liked
-        
-        try (Connection conn = dataSource.getConnection(); PreparedStatement ps2 = conn.prepareStatement(newLike); 
-        PreparedStatement ps = conn.prepareStatement(alreadyLiked); PreparedStatement ps3 = conn.prepareStatement(removeLike)) {
-
-            ps2.setInt(1, postId);
-            ps2.setInt(2, Integer.parseInt(loggedInUser.getUserId()));
-            ps.setInt(1, Integer.parseInt(loggedInUser.getUserId()));
-            ps3.setInt(1, postId);
-            ps3.setInt(2, Integer.parseInt(loggedInUser.getUserId()));
-
-            ResultSet rs = ps.executeQuery();
-            List<Integer> postIds = new ArrayList<>();
-            
-            while (rs.next()) {
-                postIds.add(rs.getInt("postId"));
-            }
-
-            if (isAdd && !postIds.contains(postId)) {
-                ps2.executeQuery();
-                return true;
-            }
-
-            else if (!isAdd && postIds.contains(postId)) {
-                ps3.executeQuery();
-                return true;
-            }
-
-            else {
-                throw new SQLException();
-            }
-        }
-
-        // if a post is already liked then the user should not be allowed to relike it
-     }
-
-  
-    /*
-    * this is for the profile thing.
-    */
- public List<Post> getPostsByUserIdOrderByDateDesc(String userId) {
-        List<Post> posts = new ArrayList<>();
-        String sql = "SELECT p.*, u.firstName, u.lastName " +
-                     "FROM post p " +
-                     "JOIN user u ON p.userId = u.userId " +
-                     "WHERE p.userId = ? " +
-                     "ORDER BY p.postDate DESC";
-        try (Connection conn = dataSource.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setString(1, userId);
-            try (ResultSet rs = pstmt.executeQuery()) {
-                while (rs.next()) {
-                    User user = new User(
-                        rs.getString("userId"),
-                        rs.getString("firstName"),
-                        rs.getString("lastName")
-                    );
-                    Post post = new Post(
-                        rs.getString("postId"),
-                        rs.getString("postText"),
-                        rs.getString("postDate"),
-                        user,
-                        0, // Placeholder for heartsCount
-                        0, // Placeholder for commentsCount
-                        false, // Placeholder for isHearted
-                        false // Placeholder for isBookmarked
-                    );
-                    posts.add(post);
-                }
-            }
-        } catch (SQLException e) {
-            // Handle the exception
-            e.printStackTrace();
-        }
-        return posts;
     }
 }
